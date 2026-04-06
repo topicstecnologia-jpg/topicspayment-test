@@ -1,0 +1,20 @@
+{
+  "users": [
+    {
+      "id": "dev-admin-503430f0-efba-4d09-b414-bff56e0bc9be",
+      "name": "TOPICS Admin",
+      "email": "admin@topicsmembers.com",
+      "phone": null,
+      "address": null,
+      "avatarUrl": null,
+      "passwordHash": "$2b$12$eLTBN6oOw.mJ4r1lTMVkV.K7pBdrM5FK18WC46KE9YoRJpyq9kI26",
+      "role": "admin",
+      "isEmailVerified": true,
+      "emailVerifiedAt": "2026-04-04T19:25:48.189Z",
+      "createdAt": "2026-04-04T19:25:48.189Z",
+      "updatedAt": "2026-04-04T19:25:48.189Z"
+    }
+  ],
+  "passwordResetTokens": [],
+  "emailVerificationCodes": []
+}
