@@ -1,9 +1,16 @@
-const backendApiUrl = (
+const configuredBackendUrl = (
   process.env.NEXT_PUBLIC_BACKEND_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:3001"
+  ""
 ).replace(/\/$/, "");
-const usesExternalBackend = /^https?:\/\//.test(backendApiUrl);
+
+const isLocalBackendUrl =
+  configuredBackendUrl === "" ||
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(configuredBackendUrl);
+
+const usesExternalBackend =
+  /^https?:\/\//.test(configuredBackendUrl) &&
+  !(process.env.NODE_ENV === "production" && isLocalBackendUrl);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -16,7 +23,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `${backendApiUrl}/:path*`
+        destination: `${configuredBackendUrl}/:path*`
       }
     ];
   }

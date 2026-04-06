@@ -56,6 +56,8 @@ O arquivo [frontend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS -
 - `NEXT_PUBLIC_SUPABASE_URL=https://sdwfhqvchhntectukiju.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_7ub2qG8Snra7dWR9ZAbB6g_7dHjPL2w`
 
+Em producao na Vercel, o frontend deve consumir o backend interno em `/api`. Nao configure `NEXT_PUBLIC_API_URL` apontando para `localhost`.
+
 ### Backend
 
 O arquivo [backend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS - MEMBERS\backend\.env.example) foi ajustado para usar o Postgres do Supabase:
