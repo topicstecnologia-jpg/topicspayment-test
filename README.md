@@ -62,8 +62,9 @@ O arquivo [backend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS - 
 
 ```env
 DATABASE_URL=postgresql://postgres.sdwfhqvchhntectukiju:[YOUR-SUPABASE-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres
-DIRECT_URL=postgresql://postgres:[YOUR-SUPABASE-PASSWORD]@db.sdwfhqvchhntectukiju.supabase.co:5432/postgres
 ```
+
+No deploy atual, apenas `DATABASE_URL` e obrigatoria para o build e para o runtime do backend.
 
 Para entrega real de e-mails, o backend tambem aceita configuracao via Resend:
 
