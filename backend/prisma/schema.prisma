@@ -29,6 +29,7 @@ model User {
   updatedAt              DateTime                @updatedAt
   passwordResetTokens    PasswordResetToken[]
   emailVerificationCodes EmailVerificationCode[]
+  platformProducts       PlatformProduct[]
 }
 
 model PasswordResetToken {
@@ -53,4 +54,31 @@ model EmailVerificationCode {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model PlatformProduct {
+  id                         String   @id @default(cuid())
+  ownerId                    String
+  owner                      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                       String
+  imageUrl                   String?
+  category                   String
+  description                String   @default("")
+  salesPageUrl               String?
+  hasSalesPage               Boolean  @default(false)
+  productType                String   @default("other")
+  invoiceStatementDescriptor String   @default("")
+  refundWindow               String   @default("7_days")
+  supportEmail               String   @default("")
+  supportPhone               String   @default("")
+  price                      Float    @default(0)
+  sales                      Int      @default(0)
+  stock                      Int      @default(0)
+  isActive                   Boolean  @default(false)
+  offers                     Json
+  coupons                    Json
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@index([ownerId])
 }

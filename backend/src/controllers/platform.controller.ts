@@ -17,13 +17,13 @@ export const getPlatformDashboard = asyncHandler(async (request, response) => {
   response.json(await getDashboardPayload(request.user!));
 });
 
-export const getPlatformProducts = asyncHandler(async (_request, response) => {
-  response.json(await getProductsPayload());
+export const getPlatformProducts = asyncHandler(async (request, response) => {
+  response.json(await getProductsPayload(request.user!.id));
 });
 
 export const createPlatformProductItem = asyncHandler(async (request, response) => {
   const payload = request.body as CreatePlatformProductInput;
-  const item = await createPlatformProduct(payload);
+  const item = await createPlatformProduct(request.user!.id, payload);
 
   response.status(201).json({
     message: "Produto criado com sucesso.",
@@ -34,7 +34,7 @@ export const createPlatformProductItem = asyncHandler(async (request, response) 
 export const updatePlatformProductItem = asyncHandler(async (request, response) => {
   const payload = request.body as UpdatePlatformProductInput;
   const productId = request.params.productId;
-  const item = await updatePlatformProduct(productId, payload);
+  const item = await updatePlatformProduct(request.user!.id, productId, payload);
 
   response.json({
     message: "Produto atualizado com sucesso.",
@@ -45,7 +45,7 @@ export const updatePlatformProductItem = asyncHandler(async (request, response) 
 export const setPlatformProductItemActiveState = asyncHandler(async (request, response) => {
   const payload = request.body as SetPlatformProductActiveInput;
   const productId = request.params.productId;
-  const item = await updatePlatformProductActiveState(productId, payload.isActive);
+  const item = await updatePlatformProductActiveState(request.user!.id, productId, payload.isActive);
 
   response.json({
     message: payload.isActive ? "Produto ativado com sucesso." : "Produto desativado com sucesso.",

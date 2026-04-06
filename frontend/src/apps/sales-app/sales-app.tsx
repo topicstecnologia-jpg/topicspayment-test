@@ -99,6 +99,11 @@ export function SalesApp() {
             <div className="platform-wave-panel rounded-[24px] p-4 sm:p-5">
               <div className="relative z-[1] grid gap-6">
                 <div className="grid gap-4 xl:grid-cols-3">
+                  {visibleItems.length === 0 ? (
+                    <div className="xl:col-span-3 rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-white/48">
+                      Nenhuma venda real encontrada para este filtro.
+                    </div>
+                  ) : null}
                   {visibleItems.slice(0, 3).map((item, index) => (
                     <div key={item.id}>
                       <p className="text-xs text-white/34">{String(index + 1).padStart(2, "0")}</p>
@@ -203,6 +208,11 @@ export function SalesApp() {
           </div>
 
           <div className="mt-5 space-y-2.5">
+            {visibleItems.length === 0 ? (
+              <article className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-center text-white/48">
+                Nenhum pedido real registrado ainda.
+              </article>
+            ) : null}
             {visibleItems.map((item, index) => (
               <article
                 key={item.id}

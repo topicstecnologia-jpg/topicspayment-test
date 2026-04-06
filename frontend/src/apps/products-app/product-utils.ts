@@ -166,7 +166,7 @@ export function createDraftProduct(values?: Partial<ProductFormInput>): Platform
 
   return {
     ...draft,
-    description: `Descricao inicial para ${draft.name.toLowerCase()}.`,
+    description: "",
     salesPageUrl: "",
     hasSalesPage: false,
     productType: inferProductType(draft.name, draft.category),
@@ -176,7 +176,7 @@ export function createDraftProduct(values?: Partial<ProductFormInput>): Platform
     supportPhone: "",
     isActive: false,
     sales: 0,
-    stock: 999,
+    stock: 0,
     offers: [],
     coupons: buildDefaultCoupons(),
     updatedAt: new Date().toISOString()

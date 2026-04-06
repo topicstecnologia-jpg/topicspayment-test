@@ -115,7 +115,7 @@ const productCouponSchema = z.object({
 export const productEditorSchema = productFormSchema
   .extend({
     description: z.string().max(1000, "A descricao precisa ter ate 1000 caracteres.").default(""),
-    stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(999),
+    stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(0),
     isActive: z.boolean().default(false),
     salesPageUrl: z.preprocess(
       normalizeTrimmedValue,

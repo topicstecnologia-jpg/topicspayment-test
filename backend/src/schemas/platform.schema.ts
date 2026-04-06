@@ -144,7 +144,7 @@ export const createPlatformProductSchema = z
     ),
     isActive: z.boolean().default(false),
     price: z.coerce.number().min(0, "Informe um preco valido."),
-    stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(999),
+    stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(0),
     imageUrl: optionalImageUrl,
     offers: z.array(productOfferSchema).default([]),
     coupons: z.array(productCouponSchema).default([])

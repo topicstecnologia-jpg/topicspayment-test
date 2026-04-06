@@ -260,6 +260,11 @@ export function DashboardApp() {
           </div>
 
           <div className="mt-4 space-y-3">
+            {data.feed.length === 0 ? (
+              <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-center text-white/48">
+                Nenhuma venda real registrada ainda. As novas transacoes vao aparecer aqui assim que forem persistidas.
+              </div>
+            ) : null}
             {data.feed.map((item, index) => (
               <article
                 key={item.id}

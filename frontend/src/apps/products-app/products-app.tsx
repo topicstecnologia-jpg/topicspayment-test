@@ -18,7 +18,7 @@ import {
 } from "./product-utils";
 
 function recalculateMetrics(items: PlatformProductItem[], current: PlatformProductsResponse["metrics"]) {
-  const projectedRevenue = items.reduce((total, item) => total + item.price * Math.max(item.sales, 1), 0);
+  const projectedRevenue = items.reduce((total, item) => total + item.price * item.sales, 0);
 
   return current.map((metric) => {
     if (metric.id === "produtos") {

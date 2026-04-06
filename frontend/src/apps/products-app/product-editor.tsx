@@ -145,61 +145,28 @@ function buildOfferCheckoutUrl(salesPageUrl: string | null, offerId: string) {
 }
 
 function buildProductTrend(product: PlatformProductItem) {
-  const baseRevenue = Math.max(product.price * Math.max(product.sales, 1), product.price);
-  const monthlyBase = Math.max(baseRevenue / 6, product.price);
-  const seed = hashValue(product.id + product.name + product.category);
   const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "short" });
   const now = new Date();
 
   return Array.from({ length: 6 }).map((_, index) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
-    const variance = 0.84 + (((seed + index * 17) % 11) - 5) * 0.035;
-    const curve = 0.78 + index * 0.06;
-    const revenue = Math.round(monthlyBase * variance * curve);
-    const orders = Math.max(1, Math.round(revenue / Math.max(product.price, 1)));
 
     return {
       label: monthFormatter.format(date).replace(".", ""),
-      revenue,
-      orders
+      revenue: 0,
+      orders: 0
     };
   });
 }
 
-function buildRecentSales(product: PlatformProductItem) {
-  const seed = hashValue(product.id + product.name);
-  const customers = ["Marina Lopes", "Caio Freitas", "Renata Solis", "Thiago Campos"];
-
-  return Array.from({ length: 4 }).map((_, index) => {
-    const customer = customers[(seed + index) % customers.length];
-    const amountFactor = 0.92 + (((seed + index * 13) % 7) - 3) * 0.06;
-
-    return {
-      id: `${product.id}-sale-${index + 1}`,
-      customer,
-      amount: Math.max(product.price * amountFactor, 1),
-      status: index % 3 === 1 ? "Processando" : "Pago",
-      when: index === 0 ? "Hoje, 10:14" : index === 1 ? "Hoje, 08:52" : index === 2 ? "Ontem, 19:08" : "Ontem, 14:21"
-    };
-  });
-}
-
-function buildLinePath(values: number[], width: number, height: number, padding: number) {
-  if (values.length === 0) {
-    return "";
-  }
-
-  const maxValue = Math.max(...values, 1);
-  const innerWidth = width - padding * 2;
-  const innerHeight = height - padding * 2;
-
-  return values
-    .map((value, index) => {
-      const x = padding + (innerWidth / Math.max(values.length - 1, 1)) * index;
-      const y = padding + innerHeight - (value / maxValue) * innerHeight;
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
+function buildRecentSales() {
+  return [] as Array<{
+    id: string;
+    customer: string;
+    amount: number;
+    status: string;
+    when: string;
+  }>;
 }
 
 interface PlatformSelectOption<T extends string> {
@@ -584,16 +551,10 @@ export function ProductEditor({
 
   const coverPreview = buildProductCover(previewProduct);
   const trend = buildProductTrend(previewProduct);
-  const recentSales = buildRecentSales(previewProduct);
-  const chartPath = buildLinePath(
-    trend.map((point) => point.revenue),
-    760,
-    280,
-    28
-  );
+  const recentSales = buildRecentSales();
   const primaryOffer =
     previewProduct.offers.find((offer) => offer.isPrimary) ?? previewProduct.offers[0];
-  const revenueEstimate = previewProduct.price * Math.max(previewProduct.sales, 1);
+  const revenueEstimate = previewProduct.price * previewProduct.sales;
   const selectedOffer =
     selectedOfferIndex != null ? offersValues[selectedOfferIndex] ?? null : null;
   const selectedOfferErrors =
@@ -1517,31 +1478,22 @@ export function ProductEditor({
                       </div>
 
                       <div className="px-5 py-5">
-                        <svg viewBox="0 0 760 280" className="h-[280px] w-full overflow-visible">
-                          <defs>
-                            <linearGradient id="product-editor-line" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="#6ea8ff" />
-                              <stop offset="50%" stopColor="#8c52ff" />
-                              <stop offset="100%" stopColor="#ff4d95" />
-                            </linearGradient>
-                          </defs>
-                          {trend.map((point, index) => {
-                            const maxValue = Math.max(...trend.map((item) => item.revenue), 1);
-                            const x = 28 + ((760 - 56) / Math.max(trend.length - 1, 1)) * index;
-                            const y = 28 + (224 - (point.revenue / maxValue) * 224);
-
-                            return (
-                              <g key={point.label}>
-                                <circle cx={x} cy={y} r="7" fill="rgba(255,255,255,0.08)" />
-                                <circle cx={x} cy={y} r="4.5" fill="url(#product-editor-line)" />
-                                <text x={x} y="268" textAnchor="middle" fill="rgba(255,255,255,0.42)" fontSize="12">
-                                  {point.label}
-                                </text>
-                              </g>
-                            );
-                          })}
-                          <path d={chartPath} fill="none" stroke="url(#product-editor-line)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <div className="rounded-[26px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-center">
+                          <p className="text-sm font-semibold text-white">Sem historico real registrado ainda.</p>
+                          <p className="mt-2 text-[13px] leading-6 text-white/46">
+                            O grafico desta area sera preenchido quando houver eventos reais de venda persistidos para este produto.
+                          </p>
+                          <div className="mt-5 flex flex-wrap justify-center gap-2">
+                            {trend.map((point) => (
+                              <span
+                                key={point.label}
+                                className="inline-flex rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-xs text-white/42"
+                              >
+                                {point.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </section>
 
@@ -1551,7 +1503,7 @@ export function ProductEditor({
                           <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-white/[0.06] text-[#79c4ff]">
                             <CircleDollarSign className="h-5 w-5" />
                           </div>
-                          <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/34">Receita estimada</p>
+                          <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-white/34">Receita registrada</p>
                           <p className="mt-2 text-[1.3rem] font-semibold tracking-[-0.05em] text-white">{formatCurrency(revenueEstimate)}</p>
                         </article>
 
@@ -1575,6 +1527,14 @@ export function ProductEditor({
                       <aside className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(21,25,35,0.98),rgba(12,15,24,0.99))] p-4">
                         <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">Ultimas vendas</p>
                         <div className="mt-4 space-y-3">
+                          {recentSales.length === 0 ? (
+                            <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-5 text-center">
+                              <p className="text-sm font-semibold text-white">Nenhuma venda real registrada.</p>
+                              <p className="mt-2 text-[12px] leading-5 text-white/44">
+                                Assim que a operacao começar a receber pedidos reais, eles aparecerao aqui.
+                              </p>
+                            </div>
+                          ) : null}
                           {recentSales.map((sale) => (
                             <div key={sale.id} className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3.5 py-3">
                               <div className="flex items-center justify-between gap-3">
