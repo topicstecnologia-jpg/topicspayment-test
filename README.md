@@ -66,11 +66,13 @@ O arquivo [backend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS - 
 DATABASE_URL=postgresql://postgres.sdwfhqvchhntectukiju:[YOUR-SUPABASE-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres
 ```
 
-No deploy atual, apenas `DATABASE_URL` e obrigatoria para o build e para o runtime do backend.
+No deploy atual, `DATABASE_URL` e obrigatoria para o build e para o runtime do backend. O schema Prisma agora e sincronizado automaticamente no build do backend com `prisma db push`, para que as tabelas reais existam no Supabase apos cada deploy.
 
 Para entrega real de e-mails, o backend tambem aceita configuracao via Resend:
 
 ```env
+# Opcional. Se omitido, o backend usa "resend" automaticamente quando
+# RESEND_API_KEY e EMAIL_FROM_ADDRESS estiverem configurados.
 EMAIL_PROVIDER=resend
 EMAIL_FROM_NAME=TOPICS Pay
 EMAIL_FROM_ADDRESS=no-reply@seudominio.com

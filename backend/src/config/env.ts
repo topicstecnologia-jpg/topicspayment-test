@@ -17,6 +17,11 @@ const optionalString = z.preprocess(
   z.string().optional()
 );
 
+const optionalEmailProvider = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.enum(["console", "resend"]).optional()
+);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(3001),
@@ -29,7 +34,7 @@ const envSchema = z.object({
   BCRYPT_SALT_ROUNDS: z.coerce.number().min(10).max(15).default(12),
   RESET_TOKEN_TTL_MINUTES: z.coerce.number().positive().default(30),
   VERIFICATION_CODE_TTL_MINUTES: z.coerce.number().positive().default(15),
-  EMAIL_PROVIDER: z.enum(["console", "resend"]).default("console"),
+  EMAIL_PROVIDER: optionalEmailProvider,
   EMAIL_FROM_NAME: z.string().default("TOPICS Pay"),
   EMAIL_FROM_ADDRESS: optionalEmail,
   EMAIL_REPLY_TO: optionalEmail,
@@ -38,7 +43,10 @@ const envSchema = z.object({
   ADMIN_EMAIL: optionalEmail,
   ADMIN_PASSWORD: optionalPassword
 }).superRefine((data, context) => {
-  if (data.EMAIL_PROVIDER === "resend") {
+  const effectiveEmailProvider =
+    data.EMAIL_PROVIDER ?? (data.RESEND_API_KEY && data.EMAIL_FROM_ADDRESS ? "resend" : "console");
+
+  if (effectiveEmailProvider === "resend") {
     if (!data.RESEND_API_KEY) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -64,4 +72,15 @@ if (!parsedEnv.success) {
   throw new Error("Environment validation failed.");
 }
 
-export const env = parsedEnv.data;
+export const env = {
+  ...parsedEnv.data,
+  EMAIL_PROVIDER:
+    parsedEnv.data.EMAIL_PROVIDER ??
+    (parsedEnv.data.RESEND_API_KEY && parsedEnv.data.EMAIL_FROM_ADDRESS ? "resend" : "console")
+};
+
+if (env.NODE_ENV === "production" && env.EMAIL_PROVIDER === "console") {
+  console.warn(
+    "EMAIL_PROVIDER is using console in production. Verification and password reset emails will not be delivered."
+  );
+}

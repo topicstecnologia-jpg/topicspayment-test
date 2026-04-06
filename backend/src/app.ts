@@ -31,14 +31,18 @@ app.use(
 app.use(express.json({ limit: "16mb" }));
 app.use(cookieParser());
 
-app.get("/health", (_request, response) => {
+function healthHandler(_request: express.Request, response: express.Response) {
   response.json({
     status: "ok",
     service: "TOPICS Pay API"
   });
-});
+}
+
+app.get("/health", healthHandler);
+app.get("/api/health", healthHandler);
 
 app.use("/", apiRouter);
+app.use("/api", apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
