@@ -1,7 +1,7 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, RefreshCcw } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ import {
 const fieldClass =
   "h-[52px] w-full rounded-[13px] border border-white/10 bg-[linear-gradient(180deg,rgba(34,35,39,0.9),rgba(21,22,26,0.92))] px-4 text-[13px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] outline-none placeholder:text-white/34 focus:border-white/20";
 
-export default function VerifyAccountPage() {
+function VerifyAccountContent() {
   const searchParams = useSearchParams();
   const { refreshSession, setUser } = useAuth();
 
@@ -157,5 +157,13 @@ export default function VerifyAccountPage() {
         </button>
       </form>
     </CinematicAuthLayout>
+  );
+}
+
+export default function VerifyAccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyAccountContent />
+    </Suspense>
   );
 }

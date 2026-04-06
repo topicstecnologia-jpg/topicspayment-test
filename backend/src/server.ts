@@ -1,6 +1,8 @@
 import { app } from "./app";
 import { env } from "./config/env";
 
-app.listen(env.PORT, () => {
-  console.log(`TOPICS Pay API listening on http://localhost:${env.PORT}`);
+const port = Number(process.env.PORT ?? env.PORT ?? 3001);
+
+app.listen(port, () => {
+  console.log(`TOPICS Pay API listening on http://localhost:${port}`);
 });
