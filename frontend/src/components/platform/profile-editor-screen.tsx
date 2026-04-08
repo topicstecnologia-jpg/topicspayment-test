@@ -1,21 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import {
   ArrowLeft,
   BadgeCheck,
-  CalendarDays,
   Camera,
-  Mail,
   MapPin,
   Phone,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
-  Trash2,
-  Upload,
   UserCircle2,
   X
 } from "lucide-react";
@@ -52,7 +47,7 @@ const inputClass =
 const textAreaClass =
   "w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10";
 
-const labelClass = "text-[11px] font-medium uppercase tracking-[0.12em] text-white/52";
+const labelClass = "text-[0.92rem] font-semibold tracking-[-0.03em] text-white/88";
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof ApiError) {
@@ -102,49 +97,6 @@ function formatDateLabel(value: string | null) {
   }).format(date);
 }
 
-function DetailPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5">
-      <p className="text-[10px] uppercase tracking-[0.22em] text-white/30">{label}</p>
-      <p className="mt-2 text-sm font-medium text-white/84">{value}</p>
-    </div>
-  );
-}
-
-function StatusRow({
-  icon: Icon,
-  label,
-  value,
-  tone = "default"
-}: {
-  icon: typeof Mail;
-  label: string;
-  value: string;
-  tone?: "default" | "success";
-}) {
-  return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5">
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-[16px] border",
-            tone === "success"
-              ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
-              : "border-white/8 bg-white/[0.05] text-[#c4a6ff]"
-          )}
-        >
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-white/30">{label}</p>
-          <p className="mt-1 truncate text-sm font-medium text-white/82">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface ProfileEditorScreenProps {
   isOpen: boolean;
   onClose: () => void;
@@ -156,7 +108,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
   const { setHeroVisible } = usePlatformShell();
 
   const [activeSection, setActiveSection] = useState<ProfileEditorSection>("profile");
-  const [isDragOver, setIsDragOver] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -209,7 +160,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
     });
     deleteForm.reset({ password: "" });
     setActiveSection("profile");
-    setIsDragOver(false);
     setProfileMessage(null);
     setProfileError(null);
     setPasswordMessage(null);
@@ -340,7 +290,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
   }
 
   function handleClearPhoto() {
-    setIsDragOver(false);
     setProfileMessage("Imagem removida. Salve para aplicar a alteracao.");
     setProfileError(null);
     profileForm.setValue("avatarUrl", "", {
@@ -353,8 +302,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
     if (!file) {
       return;
     }
-
-    setIsDragOver(false);
 
     if (!file.type.startsWith("image/")) {
       setProfileError("Envie uma imagem valida em PNG, JPG, WEBP ou GIF.");
@@ -396,19 +343,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
     event.target.value = "";
   }
 
-  function handlePhotoDrop(event: DragEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    setIsDragOver(false);
-
-    const file = event.dataTransfer.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    applyPhotoFile(file);
-  }
-
   return (
     <>
       <div className="fixed inset-0 z-[70] bg-[rgba(5,8,14,0.74)] backdrop-blur-sm" />
@@ -428,7 +362,7 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
               <div className="space-y-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
-                    <p className="text-[11px] uppercase tracking-[0.24em] text-white/32">
+                    <p className="text-[0.92rem] font-semibold tracking-[-0.03em] text-white/48">
                       Minha conta
                     </p>
                     <h2 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.07em] text-white sm:text-[2rem]">
@@ -457,13 +391,13 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(140,82,255,0.22),transparent_48%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]" />
 
                         <div className="relative flex items-start justify-between gap-3">
-                          <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/70">
+                          <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.72rem] font-semibold text-white/70">
                             TOPICS Pay
                           </div>
 
                           <div
                             className={cn(
-                              "rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em]",
+                              "rounded-full border px-3 py-1 text-[0.72rem] font-semibold",
                               user.isEmailVerified
                                 ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
                                 : "border-[#f5c463]/18 bg-[#f5c463]/10 text-[#f8d486]"
@@ -474,7 +408,11 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                         </div>
 
                         <div className="relative mt-6 flex flex-col items-center text-center">
-                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.26)]">
+                          <button
+                            type="button"
+                            onClick={handleSelectPhoto}
+                            className="group relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.26)] transition hover:border-white/18"
+                          >
                             {avatarPreview ? (
                               <img
                                 src={avatarPreview}
@@ -484,7 +422,14 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                             ) : (
                               <span className="text-[1.45rem] font-semibold text-white">{initials}</span>
                             )}
-                          </div>
+
+                            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.7))] px-3 py-3 opacity-100 transition group-hover:opacity-100">
+                              <span className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/35 px-3 py-1.5 text-[11px] font-medium text-white/84 backdrop-blur-sm">
+                                <Camera className="h-3.5 w-3.5" />
+                                Alterar foto
+                              </span>
+                            </div>
+                          </button>
 
                           <p className="mt-4 text-[1.18rem] font-semibold tracking-[-0.04em] text-white">
                             {profileValues.name || user.name}
@@ -497,40 +442,19 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                               style={{ width: `${profileCompletion}%` }}
                             />
                           </div>
-                          <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/34">
+                          <p className="mt-2 text-[0.8rem] font-medium text-white/40">
                             Perfil {profileCompletion}% completo
                           </p>
                         </div>
                       </div>
 
                       <div className="space-y-3 px-5 py-5">
-                        <button
-                          type="button"
-                          onClick={handleSelectPhoto}
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setIsDragOver(true);
-                          }}
-                          onDragLeave={() => setIsDragOver(false)}
-                          onDrop={handlePhotoDrop}
-                          className={cn(
-                            "flex w-full flex-col items-center rounded-[24px] border border-dashed px-5 py-6 text-center transition",
-                            isDragOver
-                              ? "border-[#c4a6ff]/65 bg-[#8c52ff]/10"
-                              : "border-white/10 bg-white/[0.03] hover:border-white/18 hover:bg-white/[0.05]"
-                          )}
-                        >
-                          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.05] text-[#c4a6ff]">
-                            <Upload className="h-5 w-5" />
-                          </div>
-                          <p className="mt-4 text-sm font-semibold text-white">
-                            Arraste uma imagem ou clique para carregar
-                          </p>
-                          <p className="mt-2 max-w-[210px] text-[12px] leading-5 text-white/42">
-                            PNG, JPG, WEBP ou GIF com ate 3 MB. A alteracao entra no ar so depois de salvar.
-                          </p>
-                        </button>
-
+                        <p className="text-[0.92rem] font-semibold tracking-[-0.03em] text-white/86">
+                          Toque na imagem para trocar a foto do perfil.
+                        </p>
+                        <p className="text-[13px] leading-6 text-white/44">
+                          Aceita PNG, JPG, WEBP ou GIF com ate 3 MB. A nova imagem entra no ar depois de salvar.
+                        </p>
                         {avatarPreview ? (
                           <button
                             type="button"
@@ -577,67 +501,38 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                         })}
                       </nav>
                     </section>
-
-                    <section className="platform-surface-soft rounded-[30px] p-4 sm:p-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#8c52ff]/14 text-[#d4c1ff]">
-                          <Sparkles className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white">Resumo do perfil</p>
-                          <p className="mt-2 text-[13px] leading-6 text-white/46">
-                            Dados completos deixam suporte, operacao e verificacoes futuras muito mais fluidos.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 space-y-3">
-                        <StatusRow
-                          icon={BadgeCheck}
-                          label="Status da conta"
-                          value={user.isEmailVerified ? "E-mail confirmado" : "Confirmacao pendente"}
-                          tone={user.isEmailVerified ? "success" : "default"}
-                        />
-                        <StatusRow icon={CalendarDays} label="Membro desde" value={joinedOnLabel} />
-                        <StatusRow icon={ShieldCheck} label="Perfil de acesso" value={formatRoleLabel(user.role)} />
-                      </div>
-                    </section>
                   </aside>
 
                   <div className="space-y-4">
                     {activeSection === "profile" ? (
                       <>
-                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
-                          <div className="border-b border-white/8 px-5 py-4">
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                              <div>
-                                <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
-                                  Visao geral
-                                </p>
-                                <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
-                                  Identidade e contato da conta
-                                </h3>
-                                <p className="mt-2 text-[13px] leading-6 text-white/46">
-                                  O mesmo padrao de edicao dos produtos, agora aplicado aos dados do seu perfil.
-                                </p>
-                              </div>
-
-                              <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[12px] text-white/54">
-                                Ultima atualizacao: {updatedOnLabel}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
-                            <DetailPill label="E-mail" value={user.isEmailVerified ? "Confirmado" : "Pendente"} />
-                            <DetailPill label="Telefone" value={profileValues.phone?.trim() || "Nao informado"} />
-                            <DetailPill label="Endereco" value={profileValues.address?.trim() || "Nao informado"} />
-                            <DetailPill label="Acesso" value={formatRoleLabel(user.role)} />
-                          </div>
-                        </section>
-
                         <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
                           <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                            <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
+                              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                <div>
+                                  <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                                    Identidade e contato da conta
+                                  </h3>
+                                  <p className="mt-2 text-[13px] leading-6 text-white/46">
+                                    Edite os dados principais da sua conta com o mesmo fluxo simples usado no restante da plataforma.
+                                  </p>
+                                </div>
+
+                                <p className="text-[13px] text-white/46">
+                                  Ultima atualizacao: {updatedOnLabel}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-white/56">
+                                <span>E-mail: {user.isEmailVerified ? "Confirmado" : "Pendente"}</span>
+                                <span>Telefone: {profileValues.phone?.trim() || "Nao informado"}</span>
+                                <span>Acesso: {formatRoleLabel(user.role)}</span>
+                              </div>
+                            </div>
+
+                            <input type="hidden" {...profileForm.register("avatarUrl")} />
+
                             <div className="grid gap-4 md:grid-cols-2">
                               <div className="space-y-1.5">
                                 <label className={labelClass}>Nome da conta</label>
@@ -696,27 +591,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                                 )}
                               </div>
 
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Foto por URL</label>
-                                <div className="relative">
-                                  <Camera className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
-                                  <input
-                                    className={cn(inputClass, "pl-11")}
-                                    placeholder="https://..."
-                                    {...profileForm.register("avatarUrl")}
-                                  />
-                                </div>
-                                {profileForm.formState.errors.avatarUrl ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {profileForm.formState.errors.avatarUrl.message}
-                                  </p>
-                                ) : (
-                                  <p className="text-[11px] leading-5 text-white/34">
-                                    Se preferir, cole uma URL publica em vez de enviar um arquivo.
-                                  </p>
-                                )}
-                              </div>
-
                               <div className="space-y-1.5 md:col-span-2">
                                 <label className={labelClass}>Endereco completo</label>
                                 <div className="relative">
@@ -767,197 +641,158 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                     ) : null}
 
                     {activeSection === "security" ? (
-                      <>
-                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
-                          <div className="border-b border-white/8 px-5 py-4">
-                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
-                              Seguranca
-                            </p>
-                            <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                      <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
+                        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                          <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
+                            <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
                               Controle de acesso e blindagem da sessao
                             </h3>
-                            <p className="mt-2 text-[13px] leading-6 text-white/46">
-                              Atualize a senha sem sair da tela e acompanhe os pontos que mantem sua conta protegida.
+                            <p className="text-[13px] leading-6 text-white/46">
+                              Atualize a senha sem sair da tela e acompanhe as protecoes principais que ja estao ativas na conta.
                             </p>
-                          </div>
-
-                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
-                            <DetailPill
-                              label="Verificacao"
-                              value={user.isEmailVerified ? "E-mail validado" : "Pendente"}
-                            />
-                            <DetailPill label="Perfil de acesso" value={formatRoleLabel(user.role)} />
-                            <DetailPill label="Membro desde" value={joinedOnLabel} />
-                            <DetailPill label="Ultima mudanca" value={updatedOnLabel} />
-                          </div>
-                        </section>
-
-                        <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
-                          <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-                            <div className="grid gap-4 md:grid-cols-3">
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Senha atual</label>
-                                <input
-                                  type="password"
-                                  className={inputClass}
-                                  placeholder="Digite sua senha atual"
-                                  {...passwordForm.register("currentPassword")}
-                                />
-                                {passwordForm.formState.errors.currentPassword ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {passwordForm.formState.errors.currentPassword.message}
-                                  </p>
-                                ) : null}
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Nova senha</label>
-                                <input
-                                  type="password"
-                                  className={inputClass}
-                                  placeholder="Nova senha"
-                                  {...passwordForm.register("newPassword")}
-                                />
-                                {passwordForm.formState.errors.newPassword ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {passwordForm.formState.errors.newPassword.message}
-                                  </p>
-                                ) : null}
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Confirmar nova senha</label>
-                                <input
-                                  type="password"
-                                  className={inputClass}
-                                  placeholder="Repita a nova senha"
-                                  {...passwordForm.register("confirmPassword")}
-                                />
-                                {passwordForm.formState.errors.confirmPassword ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {passwordForm.formState.errors.confirmPassword.message}
-                                  </p>
-                                ) : null}
-                              </div>
-                            </div>
-
-                            <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="min-h-[20px]">
-                                {passwordError ? (
-                                  <p className="text-sm text-[#ff9db1]">{passwordError}</p>
-                                ) : null}
-                                {passwordMessage ? (
-                                  <p className="text-sm text-[#39b980]">{passwordMessage}</p>
-                                ) : null}
-                              </div>
-
-                              <button
-                                type="submit"
-                                disabled={passwordForm.formState.isSubmitting}
-                                className="topics-gradient inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {passwordForm.formState.isSubmitting
-                                  ? "Atualizando..."
-                                  : "Salvar nova senha"}
-                              </button>
-                            </div>
-                          </section>
-                        </form>
-
-                        <section className="platform-surface-soft rounded-[30px] p-5 lg:p-6">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#8c52ff]/14 text-[#d2bcff]">
-                              <ShieldAlert className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="text-[1rem] font-semibold text-white">Blindagem ativa</p>
-                              <p className="mt-2 text-[13px] leading-6 text-white/46">
-                                Sua conta ja opera com sessoes endurecidas, validacao de origem e bloqueio de abuso em rotas sensiveis.
-                              </p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-white/56">
+                              <span>Verificacao: {user.isEmailVerified ? "E-mail validado" : "Pendente"}</span>
+                              <span>Perfil: {formatRoleLabel(user.role)}</span>
+                              <span>Membro desde: {joinedOnLabel}</span>
                             </div>
                           </div>
 
-                          <div className="mt-5 grid gap-3 md:grid-cols-2">
-                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
-                              Sessao reforcada contra reutilizacao indevida.
+                          <div className="grid gap-4 pt-5 md:grid-cols-3">
+                            <div className="space-y-1.5">
+                              <label className={labelClass}>Senha atual</label>
+                              <input
+                                type="password"
+                                className={inputClass}
+                                placeholder="Digite sua senha atual"
+                                {...passwordForm.register("currentPassword")}
+                              />
+                              {passwordForm.formState.errors.currentPassword ? (
+                                <p className="text-xs text-[#ff9db1]">
+                                  {passwordForm.formState.errors.currentPassword.message}
+                                </p>
+                              ) : null}
                             </div>
-                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
-                              Protecao de origem para operacoes sensiveis.
+
+                            <div className="space-y-1.5">
+                              <label className={labelClass}>Nova senha</label>
+                              <input
+                                type="password"
+                                className={inputClass}
+                                placeholder="Nova senha"
+                                {...passwordForm.register("newPassword")}
+                              />
+                              {passwordForm.formState.errors.newPassword ? (
+                                <p className="text-xs text-[#ff9db1]">
+                                  {passwordForm.formState.errors.newPassword.message}
+                                </p>
+                              ) : null}
                             </div>
-                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
-                              Limite de tentativas para login e automacao.
+
+                            <div className="space-y-1.5">
+                              <label className={labelClass}>Confirmar nova senha</label>
+                              <input
+                                type="password"
+                                className={inputClass}
+                                placeholder="Repita a nova senha"
+                                {...passwordForm.register("confirmPassword")}
+                              />
+                              {passwordForm.formState.errors.confirmPassword ? (
+                                <p className="text-xs text-[#ff9db1]">
+                                  {passwordForm.formState.errors.confirmPassword.message}
+                                </p>
+                              ) : null}
                             </div>
-                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
-                              Revogacao de sessoes antigas em eventos criticos.
+                          </div>
+
+                          <div className="mt-6 border-t border-white/8 pt-5">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#8c52ff]/14 text-[#d2bcff]">
+                                <ShieldAlert className="h-4.5 w-4.5" />
+                              </div>
+                              <div className="space-y-2 text-[13px] leading-6 text-white/50">
+                                <p>Sessao reforcada contra reutilizacao indevida.</p>
+                                <p>Protecao de origem para operacoes sensiveis.</p>
+                                <p>Limite de tentativas para login e automacao.</p>
+                                <p>Revogacao de sessoes antigas em eventos criticos.</p>
+                              </div>
                             </div>
+                          </div>
+
+                          <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-h-[20px]">
+                              {passwordError ? <p className="text-sm text-[#ff9db1]">{passwordError}</p> : null}
+                              {passwordMessage ? <p className="text-sm text-[#39b980]">{passwordMessage}</p> : null}
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={passwordForm.formState.isSubmitting}
+                              className="topics-gradient inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {passwordForm.formState.isSubmitting ? "Atualizando..." : "Salvar nova senha"}
+                            </button>
                           </div>
                         </section>
-                      </>
+                      </form>
                     ) : null}
 
                     {activeSection === "account" ? (
-                      <>
-                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
-                          <div className="border-b border-white/8 px-5 py-4">
-                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
-                              Conta
+                      <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                        <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
+                          <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                            Dados institucionais e estado da conta
+                          </h3>
+                          <p className="text-[13px] leading-6 text-white/46">
+                            Leitura rapida do estado atual da conta e acesso a acoes permanentes.
+                          </p>
+                        </div>
+
+                        <div className="grid gap-x-8 gap-y-5 pt-5 md:grid-cols-2">
+                          <div>
+                            <p className="text-[13px] font-medium text-white/42">E-mail atual</p>
+                            <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                              {user.email}
                             </p>
-                            <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
-                              Dados institucionais e estado da conta
-                            </h3>
-                            <p className="mt-2 text-[13px] leading-6 text-white/46">
-                              Area para leitura rapida do status da conta e acoes permanentes.
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-medium text-white/42">Verificado em</p>
+                            <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                              {verifiedOnLabel}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-medium text-white/42">Membro desde</p>
+                            <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                              {joinedOnLabel}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-medium text-white/42">Perfil de acesso</p>
+                            <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                              {formatRoleLabel(user.role)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-col gap-4 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="max-w-[700px]">
+                            <p className="text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                              Exclusao permanente da conta
+                            </p>
+                            <p className="mt-2 text-[13px] leading-6 text-white/50">
+                              Essa acao remove a conta de forma definitiva. O sistema ainda pedira sua senha para confirmar antes de concluir.
                             </p>
                           </div>
 
-                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
-                            <DetailPill label="E-mail atual" value={user.email} />
-                            <DetailPill label="Verificado em" value={verifiedOnLabel} />
-                            <DetailPill label="Membro desde" value={joinedOnLabel} />
-                            <DetailPill label="Perfil" value={formatRoleLabel(user.role)} />
-                          </div>
-                        </section>
-
-                        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-                          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-white/[0.06] text-[#f5c463]">
-                                  <Mail className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-white">Status operacional</p>
-                                  <p className="mt-2 text-[13px] leading-6 text-white/46">
-                                    Seus dados principais ja ficam disponiveis para autenticacao, contato e suporte. Quando quiser, podemos evoluir isso com mais campos e politicas.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="rounded-[24px] border border-[#ef476f]/24 bg-[linear-gradient(180deg,rgba(49,19,31,0.72),rgba(26,11,18,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                              <div className="flex items-start gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#ef476f]/18 text-[#ff93a7]">
-                                  <Trash2 className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-white">Zona de risco</p>
-                                  <p className="mt-2 text-[13px] leading-6 text-white/54">
-                                    Exclusao permanente da conta. O sistema pedira sua senha antes de concluir.
-                                  </p>
-                                </div>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => setIsDeleteOpen(true)}
-                                className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
-                              >
-                                Excluir conta
-                              </button>
-                            </div>
-                          </div>
-                        </section>
-                      </>
+                          <button
+                            type="button"
+                            onClick={() => setIsDeleteOpen(true)}
+                            className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+                          >
+                            Excluir conta
+                          </button>
+                        </div>
+                      </section>
                     ) : null}
                   </div>
                 </div>
@@ -972,7 +807,7 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
           <div className="w-full max-w-[540px] rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,30,0.99),rgba(10,13,18,0.99))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.4)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.24em] text-white/34">
+                <p className="text-[0.82rem] font-semibold tracking-[-0.02em] text-white/40">
                   Acao permanente
                 </p>
                 <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
