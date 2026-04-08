@@ -194,6 +194,7 @@ App em `http://localhost:3000`
 - O frontend foi validado por tipagem (`tsc --noEmit`) e pelas rotas locais.
 - O Supabase CLI continua opcional para este projeto, porque a conexao do Prisma usa diretamente a string do banco.
 - O envio real de e-mails foi preparado com Resend, mas depende de uma `RESEND_API_KEY` valida e de um remetente autorizado.
+- O deploy da Vercel nao deve executar `prisma db push` no build. Sincronize schema manualmente com `npm run prisma:push` antes de publicar mudancas estruturais no banco.
 
 ## Comandos Supabase informados
 
