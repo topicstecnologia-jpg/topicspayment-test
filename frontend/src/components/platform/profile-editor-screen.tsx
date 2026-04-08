@@ -1,0 +1,1048 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useForm } from "react-hook-form";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  CalendarDays,
+  Camera,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserCircle2,
+  X
+} from "lucide-react";
+
+import { useAuth } from "@/hooks/use-auth";
+import { ApiError, authApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import {
+  changePasswordSchema,
+  deleteAccountSchema,
+  updateProfileSchema,
+  type ChangePasswordInput,
+  type DeleteAccountInput,
+  type UpdateProfileInput
+} from "@/schemas/profile";
+
+import { usePlatformShell } from "./platform-shell-context";
+
+type ProfileEditorSection = "profile" | "security" | "account";
+
+const editorSections = [
+  { id: "profile", label: "Informacoes do perfil", icon: UserCircle2 },
+  { id: "security", label: "Seguranca", icon: ShieldCheck },
+  { id: "account", label: "Conta e dados", icon: BadgeCheck }
+] as const satisfies Array<{
+  id: ProfileEditorSection;
+  label: string;
+  icon: typeof UserCircle2;
+}>;
+
+const inputClass =
+  "h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10";
+
+const textAreaClass =
+  "w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10";
+
+const labelClass = "text-[11px] font-medium uppercase tracking-[0.12em] text-white/52";
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+function buildProfileDefaults(user: {
+  name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  avatarUrl: string | null;
+}): UpdateProfileInput {
+  return {
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? "",
+    address: user.address ?? "",
+    avatarUrl: user.avatarUrl ?? ""
+  };
+}
+
+function formatRoleLabel(role: "admin" | "member" | "guest") {
+  return {
+    admin: "Administrador",
+    member: "Membro ativo",
+    guest: "Convidado"
+  }[role];
+}
+
+function formatDateLabel(value: string | null) {
+  if (!value) {
+    return "Nao informado";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Nao informado";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "long"
+  }).format(date);
+}
+
+function DetailPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5">
+      <p className="text-[10px] uppercase tracking-[0.22em] text-white/30">{label}</p>
+      <p className="mt-2 text-sm font-medium text-white/84">{value}</p>
+    </div>
+  );
+}
+
+function StatusRow({
+  icon: Icon,
+  label,
+  value,
+  tone = "default"
+}: {
+  icon: typeof Mail;
+  label: string;
+  value: string;
+  tone?: "default" | "success";
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5">
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-[16px] border",
+            tone === "success"
+              ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
+              : "border-white/8 bg-white/[0.05] text-[#c4a6ff]"
+          )}
+        >
+          <Icon className="h-4.5 w-4.5" />
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-white/30">{label}</p>
+          <p className="mt-1 truncate text-sm font-medium text-white/82">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ProfileEditorScreenProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { user, setUser } = useAuth();
+  const { setHeroVisible } = usePlatformShell();
+
+  const [activeSection, setActiveSection] = useState<ProfileEditorSection>("profile");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const profileForm = useForm<UpdateProfileInput>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: user ? buildProfileDefaults(user) : undefined
+  });
+
+  const passwordForm = useForm<ChangePasswordInput>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    }
+  });
+
+  const deleteForm = useForm<DeleteAccountInput>({
+    resolver: zodResolver(deleteAccountSchema),
+    defaultValues: {
+      password: ""
+    }
+  });
+
+  const profileValues = profileForm.watch();
+  const avatarPreview = profileValues.avatarUrl || user?.avatarUrl || "";
+
+  useEffect(() => {
+    setHeroVisible(!isOpen);
+
+    return () => {
+      setHeroVisible(true);
+    };
+  }, [isOpen, setHeroVisible]);
+
+  useEffect(() => {
+    if (!isOpen || !user) {
+      return;
+    }
+
+    profileForm.reset(buildProfileDefaults(user));
+    passwordForm.reset({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
+    deleteForm.reset({ password: "" });
+    setActiveSection("profile");
+    setIsDragOver(false);
+    setProfileMessage(null);
+    setProfileError(null);
+    setPasswordMessage(null);
+    setPasswordError(null);
+    setDeleteError(null);
+  }, [deleteForm, isOpen, passwordForm, profileForm, user]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        if (isDeleteOpen) {
+          setIsDeleteOpen(false);
+          setDeleteError(null);
+          deleteForm.reset({ password: "" });
+          return;
+        }
+
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [deleteForm, isDeleteOpen, isOpen, onClose]);
+
+  const initials = useMemo(() => {
+    const source = profileValues.name?.trim() || user?.name || "TOPICS Pay";
+
+    return source
+      .split(" ")
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
+  }, [profileValues.name, user?.name]);
+
+  const profileCompletion = useMemo(() => {
+    const completionFields = [
+      profileValues.name,
+      profileValues.email,
+      profileValues.phone,
+      profileValues.address,
+      profileValues.avatarUrl
+    ];
+
+    const completedFields = completionFields.filter(
+      (value) => typeof value === "string" && value.trim().length > 0
+    );
+
+    return Math.round((completedFields.length / completionFields.length) * 100);
+  }, [
+    profileValues.address,
+    profileValues.avatarUrl,
+    profileValues.email,
+    profileValues.name,
+    profileValues.phone
+  ]);
+
+  const joinedOnLabel = useMemo(() => formatDateLabel(user?.createdAt ?? null), [user?.createdAt]);
+  const updatedOnLabel = useMemo(() => formatDateLabel(user?.updatedAt ?? null), [user?.updatedAt]);
+  const verifiedOnLabel = useMemo(
+    () => formatDateLabel(user?.emailVerifiedAt ?? null),
+    [user?.emailVerifiedAt]
+  );
+
+  if (!isOpen || !user) {
+    return null;
+  }
+
+  async function onSubmitProfile(values: UpdateProfileInput) {
+    setProfileMessage(null);
+    setProfileError(null);
+
+    try {
+      const response = await authApi.updateProfile(values);
+      setUser(response.user);
+      profileForm.reset(buildProfileDefaults(response.user));
+      setProfileMessage(response.message);
+    } catch (error) {
+      setProfileError(getErrorMessage(error, "Nao foi possivel atualizar o perfil."));
+    }
+  }
+
+  async function onSubmitPassword(values: ChangePasswordInput) {
+    setPasswordMessage(null);
+    setPasswordError(null);
+
+    try {
+      const response = await authApi.changePassword(values);
+      setUser(response.user);
+      passwordForm.reset({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+      setPasswordMessage(response.message);
+    } catch (error) {
+      setPasswordError(getErrorMessage(error, "Nao foi possivel atualizar a senha."));
+    }
+  }
+
+  async function onSubmitDelete(values: DeleteAccountInput) {
+    setDeleteError(null);
+
+    try {
+      await authApi.deleteAccount(values);
+      setUser(null);
+      setIsDeleteOpen(false);
+      onClose();
+      window.location.replace("/login");
+    } catch (error) {
+      setDeleteError(getErrorMessage(error, "Nao foi possivel excluir a conta."));
+    }
+  }
+
+  function handleSelectPhoto() {
+    fileInputRef.current?.click();
+  }
+
+  function handleClearPhoto() {
+    setIsDragOver(false);
+    setProfileMessage("Imagem removida. Salve para aplicar a alteracao.");
+    setProfileError(null);
+    profileForm.setValue("avatarUrl", "", {
+      shouldDirty: true,
+      shouldValidate: true
+    });
+  }
+
+  function applyPhotoFile(file: File) {
+    if (!file) {
+      return;
+    }
+
+    setIsDragOver(false);
+
+    if (!file.type.startsWith("image/")) {
+      setProfileError("Envie uma imagem valida em PNG, JPG, WEBP ou GIF.");
+      setProfileMessage(null);
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      setProfileError("A imagem precisa ter no maximo 3 MB.");
+      setProfileMessage(null);
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        profileForm.setValue("avatarUrl", reader.result, {
+          shouldDirty: true,
+          shouldValidate: true
+        });
+        setProfileMessage("Nova imagem pronta para salvar.");
+        setProfileError(null);
+      }
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      event.target.value = "";
+      return;
+    }
+
+    applyPhotoFile(file);
+    event.target.value = "";
+  }
+
+  function handlePhotoDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setIsDragOver(false);
+
+    const file = event.dataTransfer.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    applyPhotoFile(file);
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-[70] bg-[rgba(5,8,14,0.74)] backdrop-blur-sm" />
+
+      <div className="fixed inset-0 z-[71]">
+        <div className="platform-scrollbar h-full overflow-y-auto">
+          <div className="min-h-full bg-[radial-gradient(circle_at_top,rgba(140,82,255,0.1),transparent_22%),linear-gradient(180deg,#0a0d13_0%,#090b10_100%)]">
+            <div className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-white/32">
+                      Minha conta
+                    </p>
+                    <h2 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.07em] text-white sm:text-[2rem]">
+                      Editar perfil
+                    </h2>
+                    <p className="mt-2 max-w-[720px] text-[0.94rem] leading-6 text-white/44">
+                      Organize seus dados no mesmo ritmo da edicao de produtos: estrutura clara,
+                      secoes bem definidas e acoes importantes sempre a vista.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-[#f5b942]/40 bg-transparent px-4 py-2.5 text-sm font-semibold text-[#f5c14d] transition hover:bg-[#f5b942]/8"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar ao painel
+                  </button>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
+                  <aside className="space-y-4 xl:sticky xl:top-5">
+                    <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+                      <div className="relative overflow-hidden border-b border-white/8 px-5 py-5">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(140,82,255,0.22),transparent_48%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]" />
+
+                        <div className="relative flex items-start justify-between gap-3">
+                          <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/70">
+                            TOPICS Pay
+                          </div>
+
+                          <div
+                            className={cn(
+                              "rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em]",
+                              user.isEmailVerified
+                                ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
+                                : "border-[#f5c463]/18 bg-[#f5c463]/10 text-[#f8d486]"
+                            )}
+                          >
+                            {user.isEmailVerified ? "Verificado" : "Pendente"}
+                          </div>
+                        </div>
+
+                        <div className="relative mt-6 flex flex-col items-center text-center">
+                          <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.26)]">
+                            {avatarPreview ? (
+                              <img
+                                src={avatarPreview}
+                                alt={profileValues.name || user.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[1.45rem] font-semibold text-white">{initials}</span>
+                            )}
+                          </div>
+
+                          <p className="mt-4 text-[1.18rem] font-semibold tracking-[-0.04em] text-white">
+                            {profileValues.name || user.name}
+                          </p>
+                          <p className="mt-1 text-sm text-white/52">{profileValues.email || user.email}</p>
+
+                          <div className="mt-4 h-2 w-full rounded-full bg-white/[0.06]">
+                            <div
+                              className="h-full rounded-full bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)]"
+                              style={{ width: `${profileCompletion}%` }}
+                            />
+                          </div>
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-white/34">
+                            Perfil {profileCompletion}% completo
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 px-5 py-5">
+                        <button
+                          type="button"
+                          onClick={handleSelectPhoto}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsDragOver(true);
+                          }}
+                          onDragLeave={() => setIsDragOver(false)}
+                          onDrop={handlePhotoDrop}
+                          className={cn(
+                            "flex w-full flex-col items-center rounded-[24px] border border-dashed px-5 py-6 text-center transition",
+                            isDragOver
+                              ? "border-[#c4a6ff]/65 bg-[#8c52ff]/10"
+                              : "border-white/10 bg-white/[0.03] hover:border-white/18 hover:bg-white/[0.05]"
+                          )}
+                        >
+                          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.05] text-[#c4a6ff]">
+                            <Upload className="h-5 w-5" />
+                          </div>
+                          <p className="mt-4 text-sm font-semibold text-white">
+                            Arraste uma imagem ou clique para carregar
+                          </p>
+                          <p className="mt-2 max-w-[210px] text-[12px] leading-5 text-white/42">
+                            PNG, JPG, WEBP ou GIF com ate 3 MB. A alteracao entra no ar so depois de salvar.
+                          </p>
+                        </button>
+
+                        {avatarPreview ? (
+                          <button
+                            type="button"
+                            onClick={handleClearPhoto}
+                            className="inline-flex w-full items-center justify-center rounded-full border border-[#ef476f]/25 bg-[linear-gradient(135deg,rgba(239,71,111,0.18),rgba(239,71,111,0.08))] px-4 py-2.5 text-sm font-semibold text-[#ff96aa] transition hover:brightness-110"
+                          >
+                            Remover imagem atual
+                          </button>
+                        ) : null}
+                      </div>
+                    </section>
+
+                    <section className="platform-surface rounded-[30px] p-4 sm:p-5">
+                      <nav className="space-y-2">
+                        {editorSections.map((section) => {
+                          const Icon = section.icon;
+                          const isActive = activeSection === section.id;
+
+                          return (
+                            <button
+                              key={section.id}
+                              type="button"
+                              onClick={() => setActiveSection(section.id)}
+                              className={cn(
+                                "flex w-full items-center gap-3 rounded-[22px] border px-4 py-3.5 text-left transition",
+                                isActive
+                                  ? "border-white/10 bg-white/[0.06] text-white shadow-[inset_3px_0_0_0_rgba(255,255,255,0.9)]"
+                                  : "border-transparent bg-transparent text-white/56 hover:border-white/8 hover:bg-white/[0.03] hover:text-white/82"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "flex h-9 w-9 items-center justify-center rounded-[14px]",
+                                  isActive ? "bg-white/[0.08] text-white" : "bg-white/[0.04] text-white/54"
+                                )}
+                              >
+                                <Icon className="h-4.5 w-4.5" />
+                              </span>
+                              <span className="text-[0.96rem] font-semibold tracking-[-0.03em]">
+                                {section.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </nav>
+                    </section>
+
+                    <section className="platform-surface-soft rounded-[30px] p-4 sm:p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#8c52ff]/14 text-[#d4c1ff]">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">Resumo do perfil</p>
+                          <p className="mt-2 text-[13px] leading-6 text-white/46">
+                            Dados completos deixam suporte, operacao e verificacoes futuras muito mais fluidos.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 space-y-3">
+                        <StatusRow
+                          icon={BadgeCheck}
+                          label="Status da conta"
+                          value={user.isEmailVerified ? "E-mail confirmado" : "Confirmacao pendente"}
+                          tone={user.isEmailVerified ? "success" : "default"}
+                        />
+                        <StatusRow icon={CalendarDays} label="Membro desde" value={joinedOnLabel} />
+                        <StatusRow icon={ShieldCheck} label="Perfil de acesso" value={formatRoleLabel(user.role)} />
+                      </div>
+                    </section>
+                  </aside>
+
+                  <div className="space-y-4">
+                    {activeSection === "profile" ? (
+                      <>
+                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+                          <div className="border-b border-white/8 px-5 py-4">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                              <div>
+                                <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
+                                  Visao geral
+                                </p>
+                                <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                                  Identidade e contato da conta
+                                </h3>
+                                <p className="mt-2 text-[13px] leading-6 text-white/46">
+                                  O mesmo padrao de edicao dos produtos, agora aplicado aos dados do seu perfil.
+                                </p>
+                              </div>
+
+                              <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[12px] text-white/54">
+                                Ultima atualizacao: {updatedOnLabel}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
+                            <DetailPill label="E-mail" value={user.isEmailVerified ? "Confirmado" : "Pendente"} />
+                            <DetailPill label="Telefone" value={profileValues.phone?.trim() || "Nao informado"} />
+                            <DetailPill label="Endereco" value={profileValues.address?.trim() || "Nao informado"} />
+                            <DetailPill label="Acesso" value={formatRoleLabel(user.role)} />
+                          </div>
+                        </section>
+
+                        <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
+                          <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Nome da conta</label>
+                                <input
+                                  className={inputClass}
+                                  placeholder="Seu nome ou nome da operacao"
+                                  {...profileForm.register("name")}
+                                />
+                                {profileForm.formState.errors.name ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.name.message}
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] leading-5 text-white/34">
+                                    Esse nome aparece nas areas internas e no contexto da sua operacao.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>E-mail principal</label>
+                                <input
+                                  className={inputClass}
+                                  placeholder="voce@empresa.com"
+                                  {...profileForm.register("email")}
+                                />
+                                {profileForm.formState.errors.email ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.email.message}
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] leading-5 text-white/34">
+                                    Usado para autenticacao, alertas operacionais e comunicacoes importantes.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Telefone / WhatsApp</label>
+                                <div className="relative">
+                                  <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
+                                  <input
+                                    className={cn(inputClass, "pl-11")}
+                                    placeholder="(11) 99999-9999"
+                                    {...profileForm.register("phone")}
+                                  />
+                                </div>
+                                {profileForm.formState.errors.phone ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.phone.message}
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] leading-5 text-white/34">
+                                    Ajuda suporte, contato comercial e verificacoes futuras.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Foto por URL</label>
+                                <div className="relative">
+                                  <Camera className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
+                                  <input
+                                    className={cn(inputClass, "pl-11")}
+                                    placeholder="https://..."
+                                    {...profileForm.register("avatarUrl")}
+                                  />
+                                </div>
+                                {profileForm.formState.errors.avatarUrl ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.avatarUrl.message}
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] leading-5 text-white/34">
+                                    Se preferir, cole uma URL publica em vez de enviar um arquivo.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="space-y-1.5 md:col-span-2">
+                                <label className={labelClass}>Endereco completo</label>
+                                <div className="relative">
+                                  <MapPin className="pointer-events-none absolute left-4 top-4 h-4 w-4 text-white/24" />
+                                  <textarea
+                                    rows={5}
+                                    className={cn(textAreaClass, "resize-none pl-11")}
+                                    placeholder="Rua, numero, bairro, cidade e referencias"
+                                    {...profileForm.register("address")}
+                                  />
+                                </div>
+                                {profileForm.formState.errors.address ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.address.message}
+                                  </p>
+                                ) : (
+                                  <p className="text-[11px] leading-5 text-white/34">
+                                    Mantenha esse campo completo para cadastro, faturamento e contato operacional.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="min-h-[20px]">
+                                {profileError ? (
+                                  <p className="text-sm text-[#ff9db1]">{profileError}</p>
+                                ) : null}
+                                {profileMessage ? (
+                                  <p className="text-sm text-[#39b980]">{profileMessage}</p>
+                                ) : null}
+                              </div>
+
+                              <button
+                                type="submit"
+                                disabled={profileForm.formState.isSubmitting}
+                                className="topics-gradient inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <BadgeCheck className="h-4 w-4" />
+                                {profileForm.formState.isSubmitting
+                                  ? "Salvando..."
+                                  : "Salvar informacoes"}
+                              </button>
+                            </div>
+                          </section>
+                        </form>
+                      </>
+                    ) : null}
+
+                    {activeSection === "security" ? (
+                      <>
+                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+                          <div className="border-b border-white/8 px-5 py-4">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
+                              Seguranca
+                            </p>
+                            <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                              Controle de acesso e blindagem da sessao
+                            </h3>
+                            <p className="mt-2 text-[13px] leading-6 text-white/46">
+                              Atualize a senha sem sair da tela e acompanhe os pontos que mantem sua conta protegida.
+                            </p>
+                          </div>
+
+                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
+                            <DetailPill
+                              label="Verificacao"
+                              value={user.isEmailVerified ? "E-mail validado" : "Pendente"}
+                            />
+                            <DetailPill label="Perfil de acesso" value={formatRoleLabel(user.role)} />
+                            <DetailPill label="Membro desde" value={joinedOnLabel} />
+                            <DetailPill label="Ultima mudanca" value={updatedOnLabel} />
+                          </div>
+                        </section>
+
+                        <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
+                          <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                            <div className="grid gap-4 md:grid-cols-3">
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Senha atual</label>
+                                <input
+                                  type="password"
+                                  className={inputClass}
+                                  placeholder="Digite sua senha atual"
+                                  {...passwordForm.register("currentPassword")}
+                                />
+                                {passwordForm.formState.errors.currentPassword ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {passwordForm.formState.errors.currentPassword.message}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Nova senha</label>
+                                <input
+                                  type="password"
+                                  className={inputClass}
+                                  placeholder="Nova senha"
+                                  {...passwordForm.register("newPassword")}
+                                />
+                                {passwordForm.formState.errors.newPassword ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {passwordForm.formState.errors.newPassword.message}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className={labelClass}>Confirmar nova senha</label>
+                                <input
+                                  type="password"
+                                  className={inputClass}
+                                  placeholder="Repita a nova senha"
+                                  {...passwordForm.register("confirmPassword")}
+                                />
+                                {passwordForm.formState.errors.confirmPassword ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {passwordForm.formState.errors.confirmPassword.message}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="min-h-[20px]">
+                                {passwordError ? (
+                                  <p className="text-sm text-[#ff9db1]">{passwordError}</p>
+                                ) : null}
+                                {passwordMessage ? (
+                                  <p className="text-sm text-[#39b980]">{passwordMessage}</p>
+                                ) : null}
+                              </div>
+
+                              <button
+                                type="submit"
+                                disabled={passwordForm.formState.isSubmitting}
+                                className="topics-gradient inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {passwordForm.formState.isSubmitting
+                                  ? "Atualizando..."
+                                  : "Salvar nova senha"}
+                              </button>
+                            </div>
+                          </section>
+                        </form>
+
+                        <section className="platform-surface-soft rounded-[30px] p-5 lg:p-6">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#8c52ff]/14 text-[#d2bcff]">
+                              <ShieldAlert className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="text-[1rem] font-semibold text-white">Blindagem ativa</p>
+                              <p className="mt-2 text-[13px] leading-6 text-white/46">
+                                Sua conta ja opera com sessoes endurecidas, validacao de origem e bloqueio de abuso em rotas sensiveis.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-5 grid gap-3 md:grid-cols-2">
+                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
+                              Sessao reforcada contra reutilizacao indevida.
+                            </div>
+                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
+                              Protecao de origem para operacoes sensiveis.
+                            </div>
+                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
+                              Limite de tentativas para login e automacao.
+                            </div>
+                            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 text-sm text-white/72">
+                              Revogacao de sessoes antigas em eventos criticos.
+                            </div>
+                          </div>
+                        </section>
+                      </>
+                    ) : null}
+
+                    {activeSection === "account" ? (
+                      <>
+                        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+                          <div className="border-b border-white/8 px-5 py-4">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/34">
+                              Conta
+                            </p>
+                            <h3 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                              Dados institucionais e estado da conta
+                            </h3>
+                            <p className="mt-2 text-[13px] leading-6 text-white/46">
+                              Area para leitura rapida do status da conta e acoes permanentes.
+                            </p>
+                          </div>
+
+                          <div className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-4">
+                            <DetailPill label="E-mail atual" value={user.email} />
+                            <DetailPill label="Verificado em" value={verifiedOnLabel} />
+                            <DetailPill label="Membro desde" value={joinedOnLabel} />
+                            <DetailPill label="Perfil" value={formatRoleLabel(user.role)} />
+                          </div>
+                        </section>
+
+                        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
+                          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-white/[0.06] text-[#f5c463]">
+                                  <Mail className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-white">Status operacional</p>
+                                  <p className="mt-2 text-[13px] leading-6 text-white/46">
+                                    Seus dados principais ja ficam disponiveis para autenticacao, contato e suporte. Quando quiser, podemos evoluir isso com mais campos e politicas.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="rounded-[24px] border border-[#ef476f]/24 bg-[linear-gradient(180deg,rgba(49,19,31,0.72),rgba(26,11,18,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                              <div className="flex items-start gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#ef476f]/18 text-[#ff93a7]">
+                                  <Trash2 className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-white">Zona de risco</p>
+                                  <p className="mt-2 text-[13px] leading-6 text-white/54">
+                                    Exclusao permanente da conta. O sistema pedira sua senha antes de concluir.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setIsDeleteOpen(true)}
+                                className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+                              >
+                                Excluir conta
+                              </button>
+                            </div>
+                          </div>
+                        </section>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isDeleteOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(5,8,14,0.78)] px-4 py-5 backdrop-blur-sm">
+          <div className="w-full max-w-[540px] rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,30,0.99),rgba(10,13,18,0.99))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.4)] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-white/34">
+                  Acao permanente
+                </p>
+                <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
+                  Excluir conta
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteOpen(false);
+                  setDeleteError(null);
+                  deleteForm.reset({ password: "" });
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/58 transition hover:bg-white/[0.08] hover:text-white"
+                aria-label="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[22px] border border-[#ef476f]/28 bg-[linear-gradient(180deg,rgba(239,71,111,0.14),rgba(239,71,111,0.04))] p-4">
+              <p className="text-base font-semibold text-white">{user.name}</p>
+              <p className="mt-2 text-sm leading-6 text-white/56">
+                Para confirmar, digite a senha da conta atual. Depois disso, a conta sera removida permanentemente.
+              </p>
+            </div>
+
+            <form onSubmit={deleteForm.handleSubmit(onSubmitDelete)} className="mt-5">
+              <div className="space-y-1.5">
+                <label className={labelClass}>Confirmacao da senha</label>
+                <input
+                  type="password"
+                  className={inputClass}
+                  placeholder="Digite sua senha atual"
+                  {...deleteForm.register("password")}
+                />
+                {deleteForm.formState.errors.password ? (
+                  <p className="text-xs text-[#ff9db1]">
+                    {deleteForm.formState.errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+
+              {deleteError ? <p className="mt-3 text-sm text-[#ff9db1]">{deleteError}</p> : null}
+
+              <div className="mt-5 flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDeleteOpen(false);
+                    setDeleteError(null);
+                    deleteForm.reset({ password: "" });
+                  }}
+                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-transparent px-4 py-2.5 text-sm font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={deleteForm.formState.isSubmitting}
+                  className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {deleteForm.formState.isSubmitting ? "Excluindo..." : "Excluir conta"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
