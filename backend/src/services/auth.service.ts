@@ -9,10 +9,14 @@ import {
   findPasswordResetTokenByHash,
   findUserByEmail,
   findUserById,
+  incrementUserSessionVersion,
   findValidVerificationCode,
   markPasswordResetTokensUsed,
   markVerificationCodesUsed,
+  registerFailedLoginAttempt,
+  registerSuccessfulLogin,
   replaceVerificationCodeForUser,
+  type AppUserRecord,
   toSafeUser,
   updateUserRecord
 } from "../lib/app-repository";
@@ -24,20 +28,34 @@ import type {
   ResetPasswordInput,
   VerifyAccountCodeInput
 } from "../schemas/auth.schema";
-import type { SafeUser } from "../types/auth";
 import { AppError } from "../utils/app-error";
 import { buildPasswordResetEmail, buildVerificationEmail } from "../utils/email-templates";
 import { signAuthToken } from "../utils/jwt";
 import { comparePassword, hashPassword } from "../utils/password";
+import {
+  MAX_FAILED_LOGIN_ATTEMPTS,
+  getNextFailedLoginState,
+  getRemainingLockoutSeconds,
+  getUserSessionVersion,
+  isAccountTemporarilyLocked
+} from "../security";
+import { logSecurityEvent } from "../security/audit";
 
-function buildSession(user: SafeUser) {
+interface SessionIssueContext {
+  fingerprint?: string;
+  ipAddress?: string | null;
+}
+
+function buildSession(user: AppUserRecord, context?: SessionIssueContext) {
   return {
-    user,
+    user: toSafeUser(user),
     token: signAuthToken({
       sub: user.id,
       email: user.email,
       role: user.role,
-      name: user.name
+      name: user.name,
+      sessionFingerprint: context?.fingerprint,
+      sessionVersion: getUserSessionVersion(user)
     })
   };
 }
@@ -63,8 +81,8 @@ async function issueVerificationCode(userId: string) {
   };
 }
 
-export function createSessionForUser(user: SafeUser) {
-  return buildSession(user);
+export function createSessionForUser(user: AppUserRecord, context?: SessionIssueContext) {
+  return buildSession(user, context);
 }
 
 export async function registerUser(input: RegisterInput) {
@@ -103,16 +121,70 @@ export async function registerUser(input: RegisterInput) {
   };
 }
 
-export async function authenticateUser(input: LoginInput) {
+export async function authenticateUser(input: LoginInput, context?: SessionIssueContext) {
   const user = await findUserByEmail(input.email);
 
   if (!user) {
+    logSecurityEvent({
+      category: "auth",
+      action: "login_failed_unknown_user",
+      metadata: {
+        email: input.email,
+        ipAddress: context?.ipAddress ?? null
+      }
+    });
     throw new AppError("Credenciais invalidas.", 401);
+  }
+
+  if (isAccountTemporarilyLocked(user)) {
+    const retryAfterSeconds = getRemainingLockoutSeconds(user);
+
+    logSecurityEvent({
+      category: "auth",
+      action: "login_blocked_locked_account",
+      metadata: {
+        email: user.email,
+        ipAddress: context?.ipAddress ?? null,
+        retryAfterSeconds
+      }
+    });
+
+    throw new AppError("Muitas tentativas de login. Aguarde antes de tentar novamente.", 429, {
+      reason: "ACCOUNT_TEMPORARILY_LOCKED",
+      retryAfterSeconds
+    });
   }
 
   const isPasswordValid = await comparePassword(input.password, user.passwordHash);
 
   if (!isPasswordValid) {
+    const failedLoginState = getNextFailedLoginState(user);
+
+    await registerFailedLoginAttempt(
+      user.id,
+      failedLoginState.failedLoginAttempts,
+      failedLoginState.lockedUntil
+    );
+
+    logSecurityEvent({
+      category: "auth",
+      action: failedLoginState.shouldLock ? "account_locked_after_login_failures" : "login_failed",
+      metadata: {
+        email: user.email,
+        ipAddress: context?.ipAddress ?? null,
+        remainingAttempts: failedLoginState.shouldLock
+          ? 0
+          : Math.max(0, MAX_FAILED_LOGIN_ATTEMPTS - failedLoginState.failedLoginAttempts)
+      }
+    });
+
+    if (failedLoginState.shouldLock) {
+      throw new AppError("Muitas tentativas de login. Aguarde antes de tentar novamente.", 429, {
+        reason: "ACCOUNT_TEMPORARILY_LOCKED",
+        retryAfterSeconds: getRemainingLockoutSeconds({ lockedUntil: failedLoginState.lockedUntil })
+      });
+    }
+
     throw new AppError("Credenciais invalidas.", 401);
   }
 
@@ -123,16 +195,16 @@ export async function authenticateUser(input: LoginInput) {
     });
   }
 
-  const safeUserRecord = await findUserById(user.id);
+  const safeUserRecord = await registerSuccessfulLogin(user.id, context?.ipAddress ?? null);
 
   if (!safeUserRecord) {
     throw new AppError("Usuario nao encontrado.", 404);
   }
 
-  return buildSession(toSafeUser(safeUserRecord));
+  return buildSession(safeUserRecord, context);
 }
 
-export async function verifyAccountCode(input: VerifyAccountCodeInput) {
+export async function verifyAccountCode(input: VerifyAccountCodeInput, context?: SessionIssueContext) {
   const user = await findUserByEmail(input.email);
 
   if (!user) {
@@ -147,7 +219,7 @@ export async function verifyAccountCode(input: VerifyAccountCodeInput) {
     }
 
     return {
-      session: buildSession(toSafeUser(safeUserRecord)),
+      session: buildSession(safeUserRecord, context),
       alreadyVerified: true
     };
   }
@@ -168,7 +240,7 @@ export async function verifyAccountCode(input: VerifyAccountCodeInput) {
   await markVerificationCodesUsed(user.id, verifiedAt);
 
   return {
-    session: buildSession(toSafeUser(verifiedUser)),
+    session: buildSession(verifiedUser, context),
     alreadyVerified: false
   };
 }
@@ -245,10 +317,16 @@ export async function resetPasswordWithToken(input: ResetPasswordInput) {
   const passwordHash = await hashPassword(input.password);
   const usedAt = new Date();
 
-  const user = await updateUserRecord(resetToken.userId, { passwordHash });
+  await updateUserRecord(resetToken.userId, { passwordHash });
+  await incrementUserSessionVersion(resetToken.userId);
+  const user = await findUserById(resetToken.userId);
   await markPasswordResetTokensUsed(resetToken.userId, usedAt);
 
-  return toSafeUser(user);
+  if (!user) {
+    throw new AppError("Usuario nao encontrado.", 404);
+  }
+
+  return user;
 }
 
 export async function getUserById(id: string) {

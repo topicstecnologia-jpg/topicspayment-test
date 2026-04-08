@@ -1,10 +1,14 @@
+import { authCookieOptions } from "../config/cookies";
 import { clearAuthCookieOptions } from "../config/cookies";
 import { env } from "../config/env";
+import { buildSessionFingerprint, getSessionFingerprintContext } from "../security";
+import { getClientIp } from "../security/config";
 import type {
   ChangePasswordInput,
   DeleteAccountInput,
   UpdateProfileInput
 } from "../schemas/profile.schema";
+import { createSessionForUser } from "../services/auth.service";
 import {
   changeUserPassword,
   deleteUserAccount,
@@ -25,10 +29,15 @@ export const updateProfile = asyncHandler(async (request, response) => {
 export const changePassword = asyncHandler(async (request, response) => {
   const payload = request.body as ChangePasswordInput;
   const user = await changeUserPassword(request.user!.id, payload);
+  const session = createSessionForUser(user, {
+    fingerprint: buildSessionFingerprint(getSessionFingerprintContext(request)),
+    ipAddress: getClientIp(request)
+  });
 
+  response.cookie(env.AUTH_COOKIE_NAME, session.token, authCookieOptions);
   response.json({
     message: "Senha atualizada com sucesso.",
-    user
+    user: session.user
   });
 });
 

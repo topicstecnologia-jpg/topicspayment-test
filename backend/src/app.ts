@@ -5,6 +5,7 @@ import express from "express";
 import { env } from "./config/env";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { apiRouter } from "./routes";
+import { applySecurityHeaders, protectCookieSessionMutations } from "./security";
 
 const app = express();
 const allowedOrigins = new Set([env.FRONTEND_URL]);
@@ -14,6 +15,9 @@ if (env.NODE_ENV !== "production") {
   allowedOrigins.add("http://127.0.0.1:3000");
   allowedOrigins.add("http://[::1]:3000");
 }
+
+app.disable("x-powered-by");
+app.set("trust proxy", env.NODE_ENV === "production" ? 1 : false);
 
 app.use(
   cors({
@@ -28,8 +32,10 @@ app.use(
     credentials: true
   })
 );
+app.use(applySecurityHeaders);
 app.use(express.json({ limit: "16mb" }));
 app.use(cookieParser());
+app.use(protectCookieSessionMutations);
 
 function healthHandler(_request: express.Request, response: express.Response) {
   response.json({

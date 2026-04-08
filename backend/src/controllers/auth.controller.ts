@@ -1,5 +1,7 @@
 import { env } from "../config/env";
 import { authCookieOptions, clearAuthCookieOptions } from "../config/cookies";
+import { getClientIp } from "../security/config";
+import { buildSessionFingerprint, getSessionFingerprintContext } from "../security";
 import type {
   ForgotPasswordInput,
   LoginInput,
@@ -38,7 +40,10 @@ export const register = asyncHandler(async (request, response) => {
 
 export const verifyAccount = asyncHandler(async (request, response) => {
   const payload = request.body as VerifyAccountCodeInput;
-  const result = await verifyAccountCode(payload);
+  const result = await verifyAccountCode(payload, {
+    fingerprint: buildSessionFingerprint(getSessionFingerprintContext(request)),
+    ipAddress: getClientIp(request)
+  });
 
   response.cookie(env.AUTH_COOKIE_NAME, result.session.token, authCookieOptions);
   response.json({
@@ -61,7 +66,10 @@ export const resendAccountCode = asyncHandler(async (request, response) => {
 
 export const login = asyncHandler(async (request, response) => {
   const payload = request.body as LoginInput;
-  const session = await authenticateUser(payload);
+  const session = await authenticateUser(payload, {
+    fingerprint: buildSessionFingerprint(getSessionFingerprintContext(request)),
+    ipAddress: getClientIp(request)
+  });
 
   response.cookie(env.AUTH_COOKIE_NAME, session.token, authCookieOptions);
   response.json({
@@ -94,7 +102,10 @@ export const forgotPassword = asyncHandler(async (request, response) => {
 export const resetPassword = asyncHandler(async (request, response) => {
   const payload = request.body as ResetPasswordInput;
   const user = await resetPasswordWithToken(payload);
-  const session = createSessionForUser(user);
+  const session = createSessionForUser(user, {
+    fingerprint: buildSessionFingerprint(getSessionFingerprintContext(request)),
+    ipAddress: getClientIp(request)
+  });
 
   response.cookie(env.AUTH_COOKIE_NAME, session.token, authCookieOptions);
   response.json({

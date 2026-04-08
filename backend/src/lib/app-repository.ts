@@ -13,6 +13,11 @@ export interface AppUserRecord {
   role: Role;
   isEmailVerified: boolean;
   emailVerifiedAt: Date | null;
+  sessionVersion: number;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  lastLoginAt: Date | null;
+  lastLoginIp: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -100,6 +105,11 @@ export async function updateUserRecord(
     role: Role;
     isEmailVerified: boolean;
     emailVerifiedAt: Date | null;
+    sessionVersion: number;
+    failedLoginAttempts: number;
+    lockedUntil: Date | null;
+    lastLoginAt: Date | null;
+    lastLoginIp: string | null;
   }>
 ) {
   return prisma.user.update({
@@ -115,6 +125,39 @@ export async function updateUserRecord(
 export async function deleteUserRecord(userId: string) {
   await prisma.user.delete({
     where: { id: userId }
+  });
+}
+
+export async function registerFailedLoginAttempt(userId: string, failedLoginAttempts: number, lockedUntil: Date | null) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginAttempts,
+      lockedUntil
+    }
+  });
+}
+
+export async function registerSuccessfulLogin(userId: string, ipAddress: string | null) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date(),
+      lastLoginIp: ipAddress
+    }
+  });
+}
+
+export async function incrementUserSessionVersion(userId: string) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      sessionVersion: {
+        increment: 1
+      }
+    }
   });
 }
 

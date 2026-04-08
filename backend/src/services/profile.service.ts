@@ -2,6 +2,7 @@ import {
   deleteUserRecord,
   findUserByEmail,
   findUserById,
+  incrementUserSessionVersion,
   toSafeUser,
   updateUserRecord
 } from "../lib/app-repository";
@@ -66,11 +67,17 @@ export async function changeUserPassword(userId: string, input: ChangePasswordIn
 
   const passwordHash = await hashPassword(input.newPassword);
 
-  const user = await updateUserRecord(userId, {
+  await updateUserRecord(userId, {
     passwordHash
   });
+  await incrementUserSessionVersion(userId);
+  const user = await findUserById(userId);
 
-  return toSafeUser(user);
+  if (!user) {
+    throw new AppError("Usuario nao encontrado.", 404);
+  }
+
+  return user;
 }
 
 export async function deleteUserAccount(userId: string, input: DeleteAccountInput) {

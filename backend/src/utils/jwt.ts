@@ -7,6 +7,8 @@ interface AuthTokenPayload {
   email: string;
   role: "admin" | "member" | "guest";
   name: string;
+  sessionFingerprint?: string;
+  sessionVersion?: number;
 }
 
 export function signAuthToken(payload: AuthTokenPayload) {

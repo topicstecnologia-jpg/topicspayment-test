@@ -1,10 +1,13 @@
 import type { Role } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 
+import { clearAuthCookieOptions } from "../config/cookies";
 import { env } from "../config/env";
 import { findUserById, toSafeUser } from "../lib/app-repository";
+import { logSecurityEvent } from "../security/audit";
 import { AppError } from "../utils/app-error";
 import { verifyAuthToken } from "../utils/jwt";
+import { buildSessionFingerprint, getSessionFingerprintContext, hasSessionVersionMismatch } from "../security";
 
 function getTokenFromRequest(request: Request) {
   const cookieToken = request.cookies?.[env.AUTH_COOKIE_NAME];
@@ -33,7 +36,32 @@ export async function requireAuth(request: Request, _response: Response, next: N
     const user = await findUserById(payload.sub);
 
     if (!user) {
+      _response.clearCookie(env.AUTH_COOKIE_NAME, clearAuthCookieOptions);
       return next(new AppError("Usuario nao encontrado.", 401));
+    }
+
+    if (hasSessionVersionMismatch(user, payload.sessionVersion)) {
+      _response.clearCookie(env.AUTH_COOKIE_NAME, clearAuthCookieOptions);
+      return next(new AppError("Sessao invalida. Faca login novamente.", 401));
+    }
+
+    if (payload.sessionFingerprint) {
+      const currentFingerprint = buildSessionFingerprint(getSessionFingerprintContext(request));
+
+      if (currentFingerprint !== payload.sessionFingerprint) {
+        _response.clearCookie(env.AUTH_COOKIE_NAME, clearAuthCookieOptions);
+
+        logSecurityEvent({
+          category: "session",
+          action: "session_binding_mismatch",
+          metadata: {
+            path: request.originalUrl,
+            userId: user.id
+          }
+        });
+
+        return next(new AppError("Sessao bloqueada por seguranca. Faca login novamente.", 401));
+      }
     }
 
     request.user = toSafeUser(user);

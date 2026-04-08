@@ -56,7 +56,7 @@ O arquivo [frontend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS -
 - `NEXT_PUBLIC_SUPABASE_URL=https://sdwfhqvchhntectukiju.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_7ub2qG8Snra7dWR9ZAbB6g_7dHjPL2w`
 
-Em producao na Vercel, o frontend deve consumir o backend interno em `/api`. Nao configure `NEXT_PUBLIC_API_URL` apontando para `localhost`.
+Em producao na Vercel, o frontend deve consumir o backend interno em `/api`. Nao configure `NEXT_PUBLIC_API_URL` ou `NEXT_PUBLIC_BACKEND_URL` apontando para `localhost`.
 
 ### Backend
 
@@ -64,9 +64,34 @@ O arquivo [backend/.env.example](c:\Users\exema\Downloads\SITES E APPS\TOPICS - 
 
 ```env
 DATABASE_URL=postgresql://postgres.sdwfhqvchhntectukiju:[YOUR-SUPABASE-PASSWORD]@aws-0-us-west-2.pooler.supabase.com:5432/postgres
+DIRECT_URL=postgresql://postgres:[YOUR-SUPABASE-PASSWORD]@db.sdwfhqvchhntectukiju.supabase.co:5432/postgres
 ```
 
-No deploy atual, `DATABASE_URL` e obrigatoria para o build e para o runtime do backend. O schema Prisma agora e sincronizado automaticamente no build do backend com `prisma db push`, para que as tabelas reais existam no Supabase apos cada deploy.
+No deploy atual:
+
+- `DATABASE_URL` e usada pelo runtime do Prisma com o pooler do Supabase.
+- `DIRECT_URL` e usada em operacoes de schema como `prisma db push`, evitando problemas comuns com conexoes pooladas.
+
+O schema Prisma continua sincronizado automaticamente no build do backend com `prisma db push`, para que as tabelas reais existam no Supabase apos cada deploy.
+
+## Fluxo Vercel-First
+
+Se voce vai validar tudo direto na plataforma publicada, este e o fluxo recomendado:
+
+1. Configure as variaveis do backend na Vercel:
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `JWT_SECRET`
+   - `FRONTEND_URL`
+   - `AUTH_COOKIE_NAME`
+   - `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS` e `EMAIL_REPLY_TO` se quiser e-mail real
+2. Configure as variaveis do frontend na Vercel:
+   - `NEXT_PUBLIC_AUTH_COOKIE_NAME`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+3. Nao publique `NEXT_PUBLIC_API_URL` nem `NEXT_PUBLIC_BACKEND_URL` com valor de `localhost`.
+4. Valide sempre pela URL real do deploy na Vercel ou pelo dominio customizado.
+5. Deixe `.env` e `.env.local` apenas para desenvolvimento local.
 
 Para entrega real de e-mails, o backend tambem aceita configuracao via Resend:
 
@@ -98,6 +123,8 @@ Substitua:
 ```
 
 pela senha real do projeto.
+
+Se estiver usando a Vercel como ambiente principal, replique essa senha nas variaveis `DATABASE_URL` e `DIRECT_URL` do projeto.
 
 ### 3. Instale as dependencias
 
@@ -144,10 +171,25 @@ App em `http://localhost:3000`
 5. Ao confirmar o codigo, a conta e marcada como verificada e a sessao ja nasce autenticada.
 6. Se precisar, o usuario pode reenviar um novo codigo.
 
+## Camada de seguranca
+
+- A camada de seguranca do backend foi isolada em `backend/src/security`.
+- `headers.ts` aplica headers defensivos e desativa cache para respostas sensiveis.
+- `csrf.ts` bloqueia mutacoes autenticadas por cookie quando a origem da requisicao nao e confiavel.
+- `rate-limit.ts` aplica limitacao de tentativas em rotas de autenticacao mais visadas.
+- `audit.ts` centraliza logs de eventos bloqueados para facilitar monitoramento e evolucao.
+- `account-protection.ts` aplica bloqueio temporario por excesso de tentativas de login e registra metadados de ultimo acesso.
+- `session.ts` adiciona versao de sessao por usuario para invalidar tokens antigos apos troca ou reset de senha.
+- `session-binding.ts` vincula novas sessoes ao navegador que criou o cookie, reduzindo reuso de sessao roubada em outro cliente.
+- A limitacao atual e em memoria para manter a plataforma estavel sem infraestrutura extra; para producao mais agressiva, vale complementar com Vercel Firewall/WAF.
+
 ## Observacoes importantes
 
 - Em desenvolvimento, o backend retorna o codigo de verificacao e o token de reset para facilitar testes.
 - O login agora bloqueia contas nao confirmadas e redireciona para a verificacao por codigo.
+- O frontend foi ajustado para ignorar backends locais em producao, evitando que um env de `localhost` derrube o login na Vercel.
+- Os dados persistidos da plataforma agora devem vir apenas do Supabase no backend publicado; arquivos locais de store/mock nao fazem mais parte do fluxo.
+- Os e-mails transacionais usam templates personalizados da TOPICS Pay, mas o envio real depende de `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS` e, opcionalmente, `EMAIL_REPLY_TO` configurados na Vercel.
 - O backend foi validado com `tsc`, schema Prisma aplicado no Supabase e seed inicial executado.
 - O frontend foi validado por tipagem (`tsc --noEmit`) e pelas rotas locais.
 - O Supabase CLI continua opcional para este projeto, porque a conexao do Prisma usa diretamente a string do banco.

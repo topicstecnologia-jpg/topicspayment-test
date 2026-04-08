@@ -2,15 +2,26 @@ const configuredBackendUrl = (
   process.env.NEXT_PUBLIC_BACKEND_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
   ""
-).replace(/\/$/, "");
+).trim().replace(/\/$/, "");
 
-const isLocalBackendUrl =
-  configuredBackendUrl === "" ||
-  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(configuredBackendUrl);
+function isLoopbackHostname(hostname) {
+  return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname.toLowerCase());
+}
 
-const usesExternalBackend =
-  /^https?:\/\//.test(configuredBackendUrl) &&
-  !(process.env.NODE_ENV === "production" && isLocalBackendUrl);
+function shouldUseExternalBackend(url) {
+  if (!/^https?:\/\//.test(url)) {
+    return false;
+  }
+
+  try {
+    const { hostname } = new URL(url);
+    return !(process.env.NODE_ENV === "production" && isLoopbackHostname(hostname));
+  } catch {
+    return false;
+  }
+}
+
+const usesExternalBackend = shouldUseExternalBackend(configuredBackendUrl);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
