@@ -206,28 +206,6 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
       .join("");
   }, [profileValues.name, user?.name]);
 
-  const profileCompletion = useMemo(() => {
-    const completionFields = [
-      profileValues.name,
-      profileValues.email,
-      profileValues.phone,
-      profileValues.address,
-      profileValues.avatarUrl
-    ];
-
-    const completedFields = completionFields.filter(
-      (value) => typeof value === "string" && value.trim().length > 0
-    );
-
-    return Math.round((completedFields.length / completionFields.length) * 100);
-  }, [
-    profileValues.address,
-    profileValues.avatarUrl,
-    profileValues.email,
-    profileValues.name,
-    profileValues.phone
-  ]);
-
   const joinedOnLabel = useMemo(() => formatDateLabel(user?.createdAt ?? null), [user?.createdAt]);
   const updatedOnLabel = useMemo(() => formatDateLabel(user?.updatedAt ?? null), [user?.updatedAt]);
   const verifiedOnLabel = useMemo(
@@ -361,18 +339,9 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[0.92rem] font-semibold tracking-[-0.03em] text-white/48">
-                      Minha conta
-                    </p>
-                    <h2 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.07em] text-white sm:text-[2rem]">
-                      Editar perfil
-                    </h2>
-                    <p className="mt-2 max-w-[720px] text-[0.94rem] leading-6 text-white/44">
-                      Organize seus dados no mesmo ritmo da edicao de produtos: estrutura clara,
-                      secoes bem definidas e acoes importantes sempre a vista.
-                    </p>
-                  </div>
+                  <h2 className="text-[1.7rem] font-semibold tracking-[-0.07em] text-white sm:text-[2rem]">
+                    Editar perfil
+                  </h2>
 
                   <button
                     type="button"
@@ -384,90 +353,9 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                   </button>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
-                  <aside className="space-y-4 xl:sticky xl:top-5">
-                    <section className="platform-surface overflow-hidden rounded-[30px] p-0">
-                      <div className="relative overflow-hidden border-b border-white/8 px-5 py-5">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(140,82,255,0.22),transparent_48%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]" />
-
-                        <div className="relative flex items-start justify-between gap-3">
-                          <div className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[0.72rem] font-semibold text-white/70">
-                            TOPICS Pay
-                          </div>
-
-                          <div
-                            className={cn(
-                              "rounded-full border px-3 py-1 text-[0.72rem] font-semibold",
-                              user.isEmailVerified
-                                ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
-                                : "border-[#f5c463]/18 bg-[#f5c463]/10 text-[#f8d486]"
-                            )}
-                          >
-                            {user.isEmailVerified ? "Verificado" : "Pendente"}
-                          </div>
-                        </div>
-
-                        <div className="relative mt-6 flex flex-col items-center text-center">
-                          <button
-                            type="button"
-                            onClick={handleSelectPhoto}
-                            className="group relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.26)] transition hover:border-white/18"
-                          >
-                            {avatarPreview ? (
-                              <img
-                                src={avatarPreview}
-                                alt={profileValues.name || user.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-[1.45rem] font-semibold text-white">{initials}</span>
-                            )}
-
-                            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.7))] px-3 py-3 opacity-100 transition group-hover:opacity-100">
-                              <span className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/35 px-3 py-1.5 text-[11px] font-medium text-white/84 backdrop-blur-sm">
-                                <Camera className="h-3.5 w-3.5" />
-                                Alterar foto
-                              </span>
-                            </div>
-                          </button>
-
-                          <p className="mt-4 text-[1.18rem] font-semibold tracking-[-0.04em] text-white">
-                            {profileValues.name || user.name}
-                          </p>
-                          <p className="mt-1 text-sm text-white/52">{profileValues.email || user.email}</p>
-
-                          <div className="mt-4 h-2 w-full rounded-full bg-white/[0.06]">
-                            <div
-                              className="h-full rounded-full bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)]"
-                              style={{ width: `${profileCompletion}%` }}
-                            />
-                          </div>
-                          <p className="mt-2 text-[0.8rem] font-medium text-white/40">
-                            Perfil {profileCompletion}% completo
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 px-5 py-5">
-                        <p className="text-[0.92rem] font-semibold tracking-[-0.03em] text-white/86">
-                          Toque na imagem para trocar a foto do perfil.
-                        </p>
-                        <p className="text-[13px] leading-6 text-white/44">
-                          Aceita PNG, JPG, WEBP ou GIF com ate 3 MB. A nova imagem entra no ar depois de salvar.
-                        </p>
-                        {avatarPreview ? (
-                          <button
-                            type="button"
-                            onClick={handleClearPhoto}
-                            className="inline-flex w-full items-center justify-center rounded-full border border-[#ef476f]/25 bg-[linear-gradient(135deg,rgba(239,71,111,0.18),rgba(239,71,111,0.08))] px-4 py-2.5 text-sm font-semibold text-[#ff96aa] transition hover:brightness-110"
-                          >
-                            Remover imagem atual
-                          </button>
-                        ) : null}
-                      </div>
-                    </section>
-
-                    <section className="platform-surface rounded-[30px] p-4 sm:p-5">
+                <div className="grid gap-6 xl:grid-cols-[248px_minmax(0,1fr)] xl:items-start">
+                  <aside className="xl:sticky xl:top-5">
+                    <section className="platform-surface rounded-[28px] p-3 sm:p-4">
                       <nav className="space-y-2">
                         {editorSections.map((section) => {
                           const Icon = section.icon;
@@ -506,136 +394,160 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                   <div className="space-y-4">
                     {activeSection === "profile" ? (
                       <>
-                        <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
-                          <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-                            <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
-                              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                <div>
-                                  <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
-                                    Identidade e contato da conta
-                                  </h3>
-                                  <p className="mt-2 text-[13px] leading-6 text-white/46">
-                                    Edite os dados principais da sua conta com o mesmo fluxo simples usado no restante da plataforma.
-                                  </p>
-                                </div>
+                        <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-6">
+                          <input type="hidden" {...profileForm.register("avatarUrl")} />
 
-                                <p className="text-[13px] text-white/46">
-                                  Ultima atualizacao: {updatedOnLabel}
-                                </p>
-                              </div>
-
-                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-white/56">
-                                <span>E-mail: {user.isEmailVerified ? "Confirmado" : "Pendente"}</span>
-                                <span>Telefone: {profileValues.phone?.trim() || "Nao informado"}</span>
-                                <span>Acesso: {formatRoleLabel(user.role)}</span>
-                              </div>
-                            </div>
-
-                            <input type="hidden" {...profileForm.register("avatarUrl")} />
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Nome da conta</label>
-                                <input
-                                  className={inputClass}
-                                  placeholder="Seu nome ou nome da operacao"
-                                  {...profileForm.register("name")}
-                                />
-                                {profileForm.formState.errors.name ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {profileForm.formState.errors.name.message}
-                                  </p>
-                                ) : (
-                                  <p className="text-[11px] leading-5 text-white/34">
-                                    Esse nome aparece nas areas internas e no contexto da sua operacao.
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>E-mail principal</label>
-                                <input
-                                  className={inputClass}
-                                  placeholder="voce@empresa.com"
-                                  {...profileForm.register("email")}
-                                />
-                                {profileForm.formState.errors.email ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {profileForm.formState.errors.email.message}
-                                  </p>
-                                ) : (
-                                  <p className="text-[11px] leading-5 text-white/34">
-                                    Usado para autenticacao, alertas operacionais e comunicacoes importantes.
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className={labelClass}>Telefone / WhatsApp</label>
-                                <div className="relative">
-                                  <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
-                                  <input
-                                    className={cn(inputClass, "pl-11")}
-                                    placeholder="(11) 99999-9999"
-                                    {...profileForm.register("phone")}
-                                  />
-                                </div>
-                                {profileForm.formState.errors.phone ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {profileForm.formState.errors.phone.message}
-                                  </p>
-                                ) : (
-                                  <p className="text-[11px] leading-5 text-white/34">
-                                    Ajuda suporte, contato comercial e verificacoes futuras.
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="space-y-1.5 md:col-span-2">
-                                <label className={labelClass}>Endereco completo</label>
-                                <div className="relative">
-                                  <MapPin className="pointer-events-none absolute left-4 top-4 h-4 w-4 text-white/24" />
-                                  <textarea
-                                    rows={5}
-                                    className={cn(textAreaClass, "resize-none pl-11")}
-                                    placeholder="Rua, numero, bairro, cidade e referencias"
-                                    {...profileForm.register("address")}
-                                  />
-                                </div>
-                                {profileForm.formState.errors.address ? (
-                                  <p className="text-xs text-[#ff9db1]">
-                                    {profileForm.formState.errors.address.message}
-                                  </p>
-                                ) : (
-                                  <p className="text-[11px] leading-5 text-white/34">
-                                    Mantenha esse campo completo para cadastro, faturamento e contato operacional.
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="min-h-[20px]">
-                                {profileError ? (
-                                  <p className="text-sm text-[#ff9db1]">{profileError}</p>
-                                ) : null}
-                                {profileMessage ? (
-                                  <p className="text-sm text-[#39b980]">{profileMessage}</p>
-                                ) : null}
+                          <div className="grid gap-8 xl:grid-cols-[380px_minmax(0,1fr)] xl:items-start">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                                  Foto de perfil
+                                </h3>
+                                <span
+                                  className={cn(
+                                    "rounded-full border px-3 py-1 text-[0.72rem] font-semibold",
+                                    user.isEmailVerified
+                                      ? "border-[#39b980]/18 bg-[#39b980]/10 text-[#74f0b2]"
+                                      : "border-[#f5c463]/18 bg-[#f5c463]/10 text-[#f8d486]"
+                                  )}
+                                >
+                                  {user.isEmailVerified ? "Verificado" : "Pendente"}
+                                </span>
                               </div>
 
                               <button
-                                type="submit"
-                                disabled={profileForm.formState.isSubmitting}
-                                className="topics-gradient inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                                type="button"
+                                onClick={handleSelectPhoto}
+                                className="group relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-[34px] border border-white/10 bg-white/[0.03] transition hover:border-white/18"
                               >
-                                <BadgeCheck className="h-4 w-4" />
-                                {profileForm.formState.isSubmitting
-                                  ? "Salvando..."
-                                  : "Salvar informacoes"}
+                                {avatarPreview ? (
+                                  <img
+                                    src={avatarPreview}
+                                    alt={profileValues.name || user.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-[2.2rem] font-semibold text-white">{initials}</span>
+                                )}
+
+                                <div className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.82))] px-4 py-5">
+                                  <span className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-black/35 px-4 py-2 text-sm font-semibold text-white/88 backdrop-blur-sm">
+                                    <Camera className="h-4 w-4" />
+                                    Alterar foto
+                                  </span>
+                                </div>
                               </button>
+
+                              {avatarPreview ? (
+                                <button
+                                  type="button"
+                                  onClick={handleClearPhoto}
+                                  className="inline-flex items-center justify-center rounded-full border border-[#ef476f]/25 bg-[linear-gradient(135deg,rgba(239,71,111,0.18),rgba(239,71,111,0.08))] px-4 py-2.5 text-sm font-semibold text-[#ff96aa] transition hover:brightness-110"
+                                >
+                                  Remover imagem atual
+                                </button>
+                              ) : null}
                             </div>
-                          </section>
+
+                            <div className="space-y-5">
+                              <div className="flex items-center justify-between gap-4">
+                                <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                                  Identidade e contato da conta
+                                </h3>
+                                <p className="text-[13px] text-white/46">
+                                  Atualizado em {updatedOnLabel}
+                                </p>
+                              </div>
+
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                  <label className={labelClass}>Nome da conta</label>
+                                  <input
+                                    className={inputClass}
+                                    placeholder="Seu nome ou nome da operacao"
+                                    {...profileForm.register("name")}
+                                  />
+                                  {profileForm.formState.errors.name ? (
+                                    <p className="text-xs text-[#ff9db1]">
+                                      {profileForm.formState.errors.name.message}
+                                    </p>
+                                  ) : null}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className={labelClass}>E-mail principal</label>
+                                  <input
+                                    className={inputClass}
+                                    placeholder="voce@empresa.com"
+                                    {...profileForm.register("email")}
+                                  />
+                                  {profileForm.formState.errors.email ? (
+                                    <p className="text-xs text-[#ff9db1]">
+                                      {profileForm.formState.errors.email.message}
+                                    </p>
+                                  ) : null}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className={labelClass}>Telefone / WhatsApp</label>
+                                  <div className="relative">
+                                    <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
+                                    <input
+                                      className={cn(inputClass, "pl-11")}
+                                      placeholder="(11) 99999-9999"
+                                      {...profileForm.register("phone")}
+                                    />
+                                  </div>
+                                  {profileForm.formState.errors.phone ? (
+                                    <p className="text-xs text-[#ff9db1]">
+                                      {profileForm.formState.errors.phone.message}
+                                    </p>
+                                  ) : null}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <label className={labelClass}>Status do e-mail</label>
+                                  <div className="flex h-12 items-center rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white/78">
+                                    {user.isEmailVerified ? "Confirmado" : "Pendente"}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2 md:col-span-2">
+                                  <label className={labelClass}>Endereco completo</label>
+                                  <div className="relative">
+                                    <MapPin className="pointer-events-none absolute left-4 top-4 h-4 w-4 text-white/24" />
+                                    <textarea
+                                      rows={6}
+                                      className={cn(textAreaClass, "resize-none pl-11")}
+                                      placeholder="Rua, numero, bairro, cidade e referencias"
+                                      {...profileForm.register("address")}
+                                    />
+                                  </div>
+                                  {profileForm.formState.errors.address ? (
+                                    <p className="text-xs text-[#ff9db1]">
+                                      {profileForm.formState.errors.address.message}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-h-[20px]">
+                              {profileError ? <p className="text-sm text-[#ff9db1]">{profileError}</p> : null}
+                              {profileMessage ? <p className="text-sm text-[#39b980]">{profileMessage}</p> : null}
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={profileForm.formState.isSubmitting}
+                              className="topics-gradient inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-[#11161f] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <BadgeCheck className="h-4 w-4" />
+                              {profileForm.formState.isSubmitting ? "Salvando..." : "Salvar informacoes"}
+                            </button>
+                          </div>
                         </form>
                       </>
                     ) : null}
