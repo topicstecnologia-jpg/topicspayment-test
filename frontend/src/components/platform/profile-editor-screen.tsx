@@ -9,7 +9,6 @@ import {
   Camera,
   MapPin,
   Phone,
-  ShieldAlert,
   ShieldCheck,
   UserCircle2,
   X
@@ -328,7 +327,7 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
       <div className="fixed inset-0 z-[71]">
         <div className="platform-scrollbar h-full overflow-y-auto">
           <div className="min-h-full bg-[radial-gradient(circle_at_top,rgba(140,82,255,0.1),transparent_22%),linear-gradient(180deg,#0a0d13_0%,#090b10_100%)]">
-            <div className="mx-auto max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">
+            <div className="mx-auto flex min-h-full max-w-[1480px] flex-col justify-center px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -391,7 +390,7 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                     </section>
                   </aside>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {activeSection === "profile" ? (
                       <>
                         <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-6">
@@ -454,56 +453,54 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                                 <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
                                   Identidade e contato da conta
                                 </h3>
-                                <p className="text-[13px] text-white/46">
-                                  Atualizado em {updatedOnLabel}
-                                </p>
+                                <p className="text-[13px] text-white/46">Atualizado em {updatedOnLabel}</p>
                               </div>
 
                               <div className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
                                   <label className={labelClass}>Nome da conta</label>
-                                  <input
-                                    className={inputClass}
-                                    placeholder="Seu nome ou nome da operacao"
-                                    {...profileForm.register("name")}
-                                  />
-                                  {profileForm.formState.errors.name ? (
-                                    <p className="text-xs text-[#ff9db1]">
-                                      {profileForm.formState.errors.name.message}
-                                    </p>
-                                  ) : null}
-                                </div>
+                                <input
+                                  className={inputClass}
+                                  placeholder="Seu nome ou nome da operacao"
+                                  {...profileForm.register("name")}
+                                />
+                                {profileForm.formState.errors.name ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.name.message}
+                                  </p>
+                                ) : null}
+                              </div>
 
                                 <div className="space-y-2">
                                   <label className={labelClass}>E-mail principal</label>
-                                  <input
-                                    className={inputClass}
-                                    placeholder="voce@empresa.com"
-                                    {...profileForm.register("email")}
-                                  />
-                                  {profileForm.formState.errors.email ? (
-                                    <p className="text-xs text-[#ff9db1]">
-                                      {profileForm.formState.errors.email.message}
-                                    </p>
-                                  ) : null}
-                                </div>
+                                <input
+                                  className={inputClass}
+                                  placeholder="voce@empresa.com"
+                                  {...profileForm.register("email")}
+                                />
+                                {profileForm.formState.errors.email ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.email.message}
+                                  </p>
+                                ) : null}
+                              </div>
 
                                 <div className="space-y-2">
                                   <label className={labelClass}>Telefone / WhatsApp</label>
                                   <div className="relative">
                                     <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/24" />
                                     <input
-                                      className={cn(inputClass, "pl-11")}
-                                      placeholder="(11) 99999-9999"
-                                      {...profileForm.register("phone")}
-                                    />
-                                  </div>
-                                  {profileForm.formState.errors.phone ? (
-                                    <p className="text-xs text-[#ff9db1]">
-                                      {profileForm.formState.errors.phone.message}
-                                    </p>
-                                  ) : null}
+                                    className={cn(inputClass, "pl-11")}
+                                    placeholder="(11) 99999-9999"
+                                    {...profileForm.register("phone")}
+                                  />
                                 </div>
+                                {profileForm.formState.errors.phone ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.phone.message}
+                                  </p>
+                                ) : null}
+                              </div>
 
                                 <div className="space-y-2">
                                   <label className={labelClass}>Status do e-mail</label>
@@ -519,16 +516,16 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                                     <textarea
                                       rows={6}
                                       className={cn(textAreaClass, "resize-none pl-11")}
-                                      placeholder="Rua, numero, bairro, cidade e referencias"
-                                      {...profileForm.register("address")}
-                                    />
-                                  </div>
-                                  {profileForm.formState.errors.address ? (
-                                    <p className="text-xs text-[#ff9db1]">
-                                      {profileForm.formState.errors.address.message}
-                                    </p>
-                                  ) : null}
+                                    placeholder="Rua, numero, bairro, cidade e referencias"
+                                    {...profileForm.register("address")}
+                                  />
                                 </div>
+                                {profileForm.formState.errors.address ? (
+                                  <p className="text-xs text-[#ff9db1]">
+                                    {profileForm.formState.errors.address.message}
+                                  </p>
+                                ) : null}
+                              </div>
                               </div>
                             </div>
                           </div>
@@ -554,22 +551,12 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
 
                     {activeSection === "security" ? (
                       <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
-                        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-                          <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
-                            <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
-                              Controle de acesso e blindagem da sessao
-                            </h3>
-                            <p className="text-[13px] leading-6 text-white/46">
-                              Atualize a senha sem sair da tela e acompanhe as protecoes principais que ja estao ativas na conta.
-                            </p>
-                            <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-white/56">
-                              <span>Verificacao: {user.isEmailVerified ? "E-mail validado" : "Pendente"}</span>
-                              <span>Perfil: {formatRoleLabel(user.role)}</span>
-                              <span>Membro desde: {joinedOnLabel}</span>
-                            </div>
-                          </div>
+                        <section className="space-y-6">
+                          <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                            Seguranca
+                          </h3>
 
-                          <div className="grid gap-4 pt-5 md:grid-cols-3">
+                          <div className="grid gap-4 md:grid-cols-3">
                             <div className="space-y-1.5">
                               <label className={labelClass}>Senha atual</label>
                               <input
@@ -616,21 +603,7 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                             </div>
                           </div>
 
-                          <div className="mt-6 border-t border-white/8 pt-5">
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[#8c52ff]/14 text-[#d2bcff]">
-                                <ShieldAlert className="h-4.5 w-4.5" />
-                              </div>
-                              <div className="space-y-2 text-[13px] leading-6 text-white/50">
-                                <p>Sessao reforcada contra reutilizacao indevida.</p>
-                                <p>Protecao de origem para operacoes sensiveis.</p>
-                                <p>Limite de tentativas para login e automacao.</p>
-                                <p>Revogacao de sessoes antigas em eventos criticos.</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-6 flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-h-[24px] flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-h-[20px]">
                               {passwordError ? <p className="text-sm text-[#ff9db1]">{passwordError}</p> : null}
                               {passwordMessage ? <p className="text-sm text-[#39b980]">{passwordMessage}</p> : null}
@@ -649,17 +622,12 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                     ) : null}
 
                     {activeSection === "account" ? (
-                      <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-                        <div className="flex flex-col gap-3 border-b border-white/8 pb-5">
-                          <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
-                            Dados institucionais e estado da conta
-                          </h3>
-                          <p className="text-[13px] leading-6 text-white/46">
-                            Leitura rapida do estado atual da conta e acesso a acoes permanentes.
-                          </p>
-                        </div>
+                      <section className="space-y-6">
+                        <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">
+                          Conta e dados
+                        </h3>
 
-                        <div className="grid gap-x-8 gap-y-5 pt-5 md:grid-cols-2">
+                        <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
                           <div>
                             <p className="text-[13px] font-medium text-white/42">E-mail atual</p>
                             <p className="mt-2 text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
@@ -686,15 +654,10 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
                           </div>
                         </div>
 
-                        <div className="mt-6 flex flex-col gap-4 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
-                          <div className="max-w-[700px]">
-                            <p className="text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
-                              Exclusao permanente da conta
-                            </p>
-                            <p className="mt-2 text-[13px] leading-6 text-white/50">
-                              Essa acao remove a conta de forma definitiva. O sistema ainda pedira sua senha para confirmar antes de concluir.
-                            </p>
-                          </div>
+                        <div className="flex flex-col gap-4 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
+                          <p className="text-[0.98rem] font-semibold tracking-[-0.03em] text-white">
+                            Exclusao permanente da conta
+                          </p>
 
                           <button
                             type="button"
