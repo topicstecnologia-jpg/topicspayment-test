@@ -104,7 +104,7 @@ interface ProfileEditorScreenProps {
 export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { user, setUser } = useAuth();
-  const { setHeroVisible } = usePlatformShell();
+  const { notify, setHeroVisible } = usePlatformShell();
 
   const [activeSection, setActiveSection] = useState<ProfileEditorSection>("profile");
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -224,9 +224,20 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
       const response = await authApi.updateProfile(values);
       setUser(response.user);
       profileForm.reset(buildProfileDefaults(response.user));
-      setProfileMessage(response.message);
+      setProfileMessage(null);
+      notify({
+        tone: "success",
+        title: "Perfil atualizado",
+        description: response.message
+      });
     } catch (error) {
-      setProfileError(getErrorMessage(error, "Nao foi possivel atualizar o perfil."));
+      const message = getErrorMessage(error, "Nao foi possivel atualizar o perfil.");
+      setProfileError(null);
+      notify({
+        tone: "error",
+        title: "Falha ao atualizar perfil",
+        description: message
+      });
     }
   }
 
@@ -242,9 +253,20 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
         newPassword: "",
         confirmPassword: ""
       });
-      setPasswordMessage(response.message);
+      setPasswordMessage(null);
+      notify({
+        tone: "success",
+        title: "Senha atualizada",
+        description: response.message
+      });
     } catch (error) {
-      setPasswordError(getErrorMessage(error, "Nao foi possivel atualizar a senha."));
+      const message = getErrorMessage(error, "Nao foi possivel atualizar a senha.");
+      setPasswordError(null);
+      notify({
+        tone: "error",
+        title: "Falha ao atualizar senha",
+        description: message
+      });
     }
   }
 
@@ -253,12 +275,24 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
 
     try {
       await authApi.deleteAccount(values);
+      notify({
+        tone: "success",
+        title: "Conta excluida",
+        description: "Sua conta foi removida com sucesso. Redirecionando para o login..."
+      });
+      await new Promise((resolve) => window.setTimeout(resolve, 900));
       setUser(null);
       setIsDeleteOpen(false);
       onClose();
       window.location.replace("/login");
     } catch (error) {
-      setDeleteError(getErrorMessage(error, "Nao foi possivel excluir a conta."));
+      const message = getErrorMessage(error, "Nao foi possivel excluir a conta.");
+      setDeleteError(null);
+      notify({
+        tone: "error",
+        title: "Falha ao excluir conta",
+        description: message
+      });
     }
   }
 
@@ -267,11 +301,16 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
   }
 
   function handleClearPhoto() {
-    setProfileMessage("Imagem removida. Salve para aplicar a alteracao.");
+    setProfileMessage(null);
     setProfileError(null);
     profileForm.setValue("avatarUrl", "", {
       shouldDirty: true,
       shouldValidate: true
+    });
+    notify({
+      tone: "info",
+      title: "Imagem removida",
+      description: "Salve para aplicar a alteracao no seu perfil."
     });
   }
 
@@ -281,14 +320,24 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
     }
 
     if (!file.type.startsWith("image/")) {
-      setProfileError("Envie uma imagem valida em PNG, JPG, WEBP ou GIF.");
+      setProfileError(null);
       setProfileMessage(null);
+      notify({
+        tone: "error",
+        title: "Arquivo invalido",
+        description: "Envie uma imagem valida em PNG, JPG, WEBP ou GIF."
+      });
       return;
     }
 
     if (file.size > 3 * 1024 * 1024) {
-      setProfileError("A imagem precisa ter no maximo 3 MB.");
+      setProfileError(null);
       setProfileMessage(null);
+      notify({
+        tone: "error",
+        title: "Imagem muito grande",
+        description: "A imagem precisa ter no maximo 3 MB."
+      });
       return;
     }
 
@@ -300,8 +349,13 @@ export function ProfileEditorScreen({ isOpen, onClose }: ProfileEditorScreenProp
           shouldDirty: true,
           shouldValidate: true
         });
-        setProfileMessage("Nova imagem pronta para salvar.");
+        setProfileMessage(null);
         setProfileError(null);
+        notify({
+          tone: "success",
+          title: "Nova imagem pronta",
+          description: "Salve para aplicar a nova foto ao seu perfil."
+        });
       }
     };
 

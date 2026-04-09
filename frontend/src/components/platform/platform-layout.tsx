@@ -18,6 +18,7 @@ import { PlatformBottomBlur } from "./platform-bottom-blur";
 import { PlatformEnergyLines } from "./platform-energy-lines";
 import { usePlatformShell } from "./platform-shell-context";
 import { ProfileMenu } from "./profile-menu";
+import { PlatformToastRegion } from "./toast/platform-toast-region";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, shortLabel: "Geral" },
@@ -325,6 +326,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       </main>
+      <PlatformToastRegion />
       <PlatformBottomBlur />
     </>
   );

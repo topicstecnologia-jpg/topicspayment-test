@@ -501,6 +501,14 @@ textarea {
   animation: platform-loading-slide 1.35s ease-in-out infinite;
 }
 
+.platform-toast-enter {
+  animation: platform-toast-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.platform-toast-progress {
+  animation: platform-toast-progress var(--toast-duration, 4200ms) linear forwards;
+}
+
 @keyframes platform-loading-slide {
   0% {
     left: -38%;
@@ -512,6 +520,28 @@ textarea {
 
   100% {
     left: 100%;
+  }
+}
+
+@keyframes platform-toast-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(28px, 0, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes platform-toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
   }
 }
 

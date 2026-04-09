@@ -42,12 +42,11 @@ function recalculateMetrics(items: PlatformProductItem[], current: PlatformProdu
 }
 
 export function ProductsApp() {
-  const { setHeroVisible } = usePlatformShell();
+  const { notify, setHeroVisible } = usePlatformShell();
   const [query, setQuery] = useState("");
   const [data, setData] = useState<PlatformProductsResponse | null>(() => platformDataCache.products.get());
   const [loading, setLoading] = useState(() => !platformDataCache.products.hasData());
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [editorError, setEditorError] = useState<string | null>(null);
   const [editorSuccessMessage, setEditorSuccessMessage] = useState<string | null>(null);
@@ -64,9 +63,9 @@ export function ProductsApp() {
     try {
       const response = await platformDataCache.products.load({ force: options?.force });
       setData(response);
-      setError(null);
+      setPageError(null);
     } catch (loadError) {
-      setError(getErrorMessage(loadError, "Nao foi possivel carregar os produtos."));
+      setPageError(getErrorMessage(loadError, "Nao foi possivel carregar os produtos."));
     } finally {
       if (!options?.silent) {
         setLoading(false);
@@ -109,8 +108,7 @@ export function ProductsApp() {
   function openCreateDialog() {
     setEditingProduct(null);
     setDialogError(null);
-    setFeedback(null);
-    setError(null);
+    setPageError(null);
     setIsCreateDialogOpen(true);
   }
 
@@ -171,18 +169,29 @@ export function ProductsApp() {
         ? await authApi.updatePlatformProduct(editingProduct.id, payload)
         : await authApi.createPlatformProduct(payload);
 
-      setFeedback(response.message);
+      notify({
+        tone: "success",
+        title: editingProduct ? "Produto atualizado" : "Produto criado",
+        description: editingProduct
+          ? `${response.item.name} foi atualizado com sucesso.`
+          : `${response.item.name} foi criado com sucesso.`
+      });
       syncProductInState(response.item);
       closeCreateDialog();
     } catch (submitError) {
-      setDialogError(
-        getErrorMessage(
-          submitError,
-          editingProduct
-            ? "Nao foi possivel atualizar o produto."
-            : "Nao foi possivel criar o produto."
-        )
+      const message = getErrorMessage(
+        submitError,
+        editingProduct
+          ? "Nao foi possivel atualizar o produto."
+          : "Nao foi possivel criar o produto."
       );
+
+      setDialogError(null);
+      notify({
+        tone: "error",
+        title: editingProduct ? "Falha ao atualizar produto" : "Falha ao criar produto",
+        description: message
+      });
     } finally {
       setIsSaving(false);
     }
@@ -219,10 +228,21 @@ export function ProductsApp() {
       const response = await authApi.updatePlatformProduct(editingProduct.id, payload);
       syncProductInState(response.item);
       setEditingProduct(response.item);
-      setEditorSuccessMessage(response.message);
-      setFeedback(response.message);
+      setEditorSuccessMessage(null);
+      notify({
+        tone: "success",
+        title: "Produto atualizado",
+        description: `${response.item.name} foi atualizado com sucesso.`
+      });
     } catch (submitError) {
-      setEditorError(getErrorMessage(submitError, "Nao foi possivel atualizar o produto."));
+      const message = getErrorMessage(submitError, "Nao foi possivel atualizar o produto.");
+
+      setEditorError(null);
+      notify({
+        tone: "error",
+        title: "Falha ao atualizar produto",
+        description: message
+      });
     } finally {
       setIsSaving(false);
     }
@@ -234,19 +254,28 @@ export function ProductsApp() {
     }
 
     setTogglingProductId(product.id);
-    setFeedback(null);
-    setError(null);
+    setPageError(null);
 
     try {
       const response = await authApi.updatePlatformProductActiveState(product.id, !product.isActive);
-      setFeedback(response.message);
+      notify({
+        tone: "success",
+        title: response.item.isActive ? "Produto ativado" : "Produto desativado",
+        description: response.item.isActive
+          ? `${response.item.name} voltou a ficar disponivel na plataforma.`
+          : `${response.item.name} foi desativado na plataforma.`
+      });
 
       startTransition(() => {
         syncProductInState(response.item);
         setEditingProduct((current) => (current?.id === response.item.id ? response.item : current));
       });
     } catch (toggleError) {
-      setError(getErrorMessage(toggleError, "Nao foi possivel alterar o status do produto."));
+      notify({
+        tone: "error",
+        title: "Falha ao alterar status",
+        description: getErrorMessage(toggleError, "Nao foi possivel alterar o status do produto.")
+      });
     } finally {
       setTogglingProductId(null);
     }
@@ -288,9 +317,7 @@ export function ProductsApp() {
               Criar Produto
             </button>
           </div>
-
-          {feedback ? <p className="text-sm text-[#7ee7ba]">{feedback}</p> : null}
-          {error ? <p className="text-sm text-[#ff9db1]">{error}</p> : null}
+          {pageError ? <p className="text-sm text-[#ff9db1]">{pageError}</p> : null}
         </section>
       )}
 

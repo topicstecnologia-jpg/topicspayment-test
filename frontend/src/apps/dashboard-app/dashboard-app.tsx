@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { SalesPerformancePanel } from "@/components/platform/sales-performance-panel";
+import { usePlatformShell } from "@/components/platform/platform-shell-context";
 import { platformDataCache } from "@/lib/platform-data-cache";
 import { cn } from "@/lib/utils";
 import type { PlatformDashboardResponse } from "@/types/platform";
@@ -71,6 +72,7 @@ function formatOrderLabel(orderId: string) {
 }
 
 export function DashboardApp() {
+  const { notify } = usePlatformShell();
   const [data, setData] = useState<PlatformDashboardResponse | null>(() => platformDataCache.dashboard.get());
   const [loading, setLoading] = useState(() => !platformDataCache.dashboard.hasData());
   const [hideSensitiveData, setHideSensitiveData] = useState(false);
@@ -213,7 +215,13 @@ export function DashboardApp() {
     const trimmedAmount = withdrawAmount.trim();
 
     if (!trimmedPixKey || !trimmedAmount || !walletStorageKey) {
-      setWalletMessage("Preencha o valor do saque e a chave PIX para continuar.");
+      const message = "Preencha o valor do saque e a chave PIX para continuar.";
+      setWalletMessage(message);
+      notify({
+        tone: "error",
+        title: "Falha ao preparar saque",
+        description: message
+      });
       return;
     }
 
@@ -228,6 +236,11 @@ export function DashboardApp() {
 
     setSavedPixKey({ type: pixKeyType, key: trimmedPixKey });
     setWalletMessage("Chave PIX salva. Sua solicitacao de saque ficou pronta.");
+    notify({
+      tone: "success",
+      title: "Saque preparado",
+      description: `Solicitacao configurada com a chave PIX ${pixKeyTypeOptions.find((option) => option.value === pixKeyType)?.label ?? "selecionada"}.`
+    });
     setIsWithdrawOpen(false);
     setIsPixTypeMenuOpen(false);
   }
