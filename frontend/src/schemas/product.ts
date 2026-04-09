@@ -64,12 +64,63 @@ const optionalNonNegativeNumber = z.preprocess(
   z.coerce.number().min(0, "Informe um valor valido.").optional()
 );
 
-export const productFormSchema = z.object({
+const productFormBaseSchema = z.object({
   name: z.string().min(2, "Informe o nome do produto."),
   category: z.string().min(2, "Informe a categoria do produto."),
-  price: z.coerce.number().min(0, "Informe um preco valido."),
+  description: z.string().max(1000, "A descricao precisa ter ate 1000 caracteres.").default(""),
+  salesPageUrl: z.preprocess(
+    normalizeTrimmedValue,
+    z
+      .string()
+      .refine((value) => value === "" || isHttpUrl(value), "Informe uma URL valida para a pagina de vendas.")
+      .default("")
+  ),
+  hasSalesPage: z.boolean().default(false),
+  productType: z
+    .enum(["course", "community", "mentorship", "template", "service", "event", "subscription", "other"])
+    .default("other"),
+  invoiceStatementDescriptor: z.preprocess(
+    normalizeTrimmedValue,
+    z.string().max(22, "A identificacao na fatura precisa ter ate 22 caracteres.").default("")
+  ),
+  refundWindow: z.enum(["7_days", "14_days", "21_days", "30_days"]).default("7_days"),
+  supportEmail: z.preprocess(
+    normalizeTrimmedValue,
+    z
+      .string()
+      .max(120, "O e-mail precisa ter ate 120 caracteres.")
+      .refine(
+        (value) => value === "" || z.string().email().safeParse(value).success,
+        "Informe um e-mail valido para o suporte."
+      )
+      .default("")
+  ),
+  supportPhone: z.preprocess(
+    normalizeTrimmedValue,
+    z.string().max(32, "O contato do suporte precisa ter ate 32 caracteres.").default("")
+  ),
+  isActive: z.boolean().default(false),
+  price: z.coerce.number().min(0, "Informe um preco valido.").default(0),
+  stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(0),
   imageUrl: optionalImageUrl
 });
+
+function validateSalesPagePresence<
+  T extends {
+    hasSalesPage: boolean;
+    salesPageUrl: string;
+  }
+>(values: T, context: z.RefinementCtx) {
+    if (values.hasSalesPage && values.salesPageUrl === "") {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe a URL da pagina de vendas.",
+        path: ["salesPageUrl"]
+      });
+    }
+}
+
+export const productFormSchema = productFormBaseSchema.superRefine(validateSalesPagePresence);
 
 export type ProductFormInput = z.infer<typeof productFormSchema>;
 
@@ -112,53 +163,11 @@ const productCouponSchema = z.object({
   note: z.string().max(180, "A observacao precisa ter ate 180 caracteres.").default("")
 });
 
-export const productEditorSchema = productFormSchema
+export const productEditorSchema = productFormBaseSchema
   .extend({
-    description: z.string().max(1000, "A descricao precisa ter ate 1000 caracteres.").default(""),
-    stock: z.coerce.number().int().min(0, "Informe um estoque valido.").default(0),
-    isActive: z.boolean().default(false),
-    salesPageUrl: z.preprocess(
-      normalizeTrimmedValue,
-      z
-        .string()
-        .refine((value) => value === "" || isHttpUrl(value), "Informe uma URL valida para a pagina de vendas.")
-        .default("")
-    ),
-    hasSalesPage: z.boolean().default(false),
-    productType: z
-      .enum(["course", "community", "mentorship", "template", "service", "event", "subscription", "other"])
-      .default("other"),
-    invoiceStatementDescriptor: z.preprocess(
-      normalizeTrimmedValue,
-      z.string().max(22, "A identificacao na fatura precisa ter ate 22 caracteres.").default("")
-    ),
-    refundWindow: z.enum(["7_days", "14_days", "21_days", "30_days"]).default("7_days"),
-    supportEmail: z.preprocess(
-      normalizeTrimmedValue,
-      z
-        .string()
-        .max(120, "O e-mail precisa ter ate 120 caracteres.")
-        .refine(
-          (value) => value === "" || z.string().email().safeParse(value).success,
-          "Informe um e-mail valido para o suporte."
-        )
-        .default("")
-    ),
-    supportPhone: z.preprocess(
-      normalizeTrimmedValue,
-      z.string().max(32, "O contato do suporte precisa ter ate 32 caracteres.").default("")
-    ),
     offers: z.array(productOfferSchema).default([]),
     coupons: z.array(productCouponSchema).default([])
   })
-  .superRefine((values, context) => {
-    if (values.hasSalesPage && values.salesPageUrl === "") {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Informe a URL da pagina de vendas.",
-        path: ["salesPageUrl"]
-      });
-    }
-  });
+  .superRefine(validateSalesPagePresence);
 
 export type ProductEditorInput = z.infer<typeof productEditorSchema>;

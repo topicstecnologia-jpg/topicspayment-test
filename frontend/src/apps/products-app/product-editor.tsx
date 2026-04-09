@@ -427,11 +427,11 @@ export function ProductEditor({
     });
   }, [offersFieldArray.fields.length]);
 
-  const watchedValues = watch();
+  const watchedValues = watch() as ProductEditorInput;
   const descriptionLength = watchedValues.description?.length ?? 0;
   const hasSalesPage = watchedValues.hasSalesPage ?? true;
   const isProductActive = watchedValues.isActive ?? false;
-  const offersValues = watchedValues.offers ?? [];
+  const offersValues: ProductEditorInput["offers"] = watchedValues.offers ?? [];
   const categoryOptions = useMemo(() => {
     const currentCategory = watchedValues.category?.trim();
 
@@ -444,7 +444,8 @@ export function ProductEditor({
 
   useEffect(() => {
     const primaryOffer =
-      watchedValues.offers?.find((offer) => offer.isPrimary) ?? watchedValues.offers?.[0];
+      watchedValues.offers?.find((offer: ProductEditorInput["offers"][number]) => offer.isPrimary) ??
+      watchedValues.offers?.[0];
 
     if (!primaryOffer) {
       return;
@@ -532,13 +533,13 @@ export function ProductEditor({
     return mergeProductWithEditorValues(product, {
       ...watchedValues,
       offers: ensurePrimaryOffer(
-        (watchedValues.offers ?? []).map((offer, index) => ({
+        (watchedValues.offers ?? []).map((offer: ProductEditorInput["offers"][number], index: number) => ({
           ...offer,
           imageUrl: offer.imageUrl ?? null,
           id: offer.id || `${product.id}-offer-${index + 1}`
         }))
       ),
-      coupons: (watchedValues.coupons ?? []).map((coupon, index) => ({
+      coupons: (watchedValues.coupons ?? []).map((coupon: ProductEditorInput["coupons"][number], index: number) => ({
         ...coupon,
         id: coupon.id || `${product.id}-coupon-${index + 1}`
       }))
@@ -553,7 +554,8 @@ export function ProductEditor({
   const trend = buildProductTrend(previewProduct);
   const recentSales = buildRecentSales();
   const primaryOffer =
-    previewProduct.offers.find((offer) => offer.isPrimary) ?? previewProduct.offers[0];
+    previewProduct.offers.find((offer: PlatformProductItem["offers"][number]) => offer.isPrimary) ??
+    previewProduct.offers[0];
   const revenueEstimate = previewProduct.price * previewProduct.sales;
   const selectedOffer =
     selectedOfferIndex != null ? offersValues[selectedOfferIndex] ?? null : null;
@@ -605,7 +607,7 @@ export function ProductEditor({
   function setPrimaryOffer(index: number) {
     setValue(
       "offers",
-      (getValues("offers") ?? []).map((offer, offerIndex) => ({
+      (getValues("offers") ?? []).map((offer: ProductEditorInput["offers"][number], offerIndex: number) => ({
         ...offer,
         isPrimary: offerIndex === index
       })),
@@ -1906,8 +1908,11 @@ export function ProductEditor({
                         </div>
 
                         <div className="grid gap-3">
-                          {offersFieldArray.fields.map((field, index) => {
-                            const currentOffer = offersValues[index];
+                          {offersFieldArray.fields.map((field, index: number) => {
+                            const currentOffer: ProductEditorInput["offers"][number] | undefined =
+                              offersValues[index];
+                            const currentOfferBillingCycle =
+                              (currentOffer?.billingCycle ?? "one_time") as PlatformProductOfferBillingCycle;
                             const offerId = currentOffer?.id || `${product.id}-offer-${index + 1}`;
                             const offerCode = buildOfferCode(product.id, offerId, index);
                             const isSelected = selectedOfferIndex === index;
@@ -1949,7 +1954,7 @@ export function ProductEditor({
                                       ) : null}
                                     </div>
                                     <p className="truncate text-sm text-white/46">
-                                      {currentOffer?.description?.trim() || billingCycleLabels[currentOffer?.billingCycle ?? "one_time"]}
+                                      {currentOffer?.description?.trim() || billingCycleLabels[currentOfferBillingCycle]}
                                     </p>
                                   </div>
 
@@ -2082,7 +2087,7 @@ export function ProductEditor({
                           </div>
                         ) : null}
 
-                        {couponsFieldArray.fields.map((field, index) => (
+                        {couponsFieldArray.fields.map((field, index: number) => (
                           <article key={field.fieldKey} className="rounded-[26px] border border-white/8 bg-white/[0.03] p-4">
                             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
                               <div className="grid gap-4 md:grid-cols-2">

@@ -159,7 +159,11 @@ export function ProductsApp() {
     try {
       const payload: ProductFormInput = {
         ...values,
-        imageUrl: values.imageUrl?.trim() || undefined
+        imageUrl: values.imageUrl?.trim() || undefined,
+        salesPageUrl: values.hasSalesPage ? values.salesPageUrl.trim() : "",
+        invoiceStatementDescriptor: values.invoiceStatementDescriptor.trim(),
+        supportEmail: values.supportEmail.trim(),
+        supportPhone: values.supportPhone.trim()
       };
 
       const response = editingProduct
@@ -200,11 +204,11 @@ export function ProductsApp() {
         invoiceStatementDescriptor: values.invoiceStatementDescriptor.trim(),
         supportEmail: values.supportEmail.trim(),
         supportPhone: values.supportPhone.trim(),
-        offers: values.offers.map((offer) => ({
+        offers: values.offers.map((offer: ProductEditorInput["offers"][number]) => ({
           ...offer,
           description: offer.description.trim()
         })),
-        coupons: values.coupons.map((coupon) => ({
+        coupons: values.coupons.map((coupon: ProductEditorInput["coupons"][number]) => ({
           ...coupon,
           code: coupon.code.trim().toUpperCase(),
           note: coupon.note.trim()
@@ -303,7 +307,7 @@ export function ProductsApp() {
         <div
           className={cn(
             "grid gap-4 xl:items-start",
-            isCreateDialogOpen ? "xl:grid-cols-[minmax(0,1fr)_420px]" : ""
+            isCreateDialogOpen ? "xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] xl:gap-7" : ""
           )}
         >
           <div className="min-w-0 space-y-4">

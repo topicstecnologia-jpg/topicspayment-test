@@ -84,10 +84,12 @@ export function ensurePrimaryOffer(offers: PlatformProductOffer[]): PlatformProd
     return offers;
   }
 
-  const primaryIndex = offers.findIndex((offer) => offer.isPrimary);
+  const primaryIndex = offers.findIndex(
+    (offer: PlatformProductOffer) => offer.isPrimary
+  );
   const safeIndex = primaryIndex >= 0 ? primaryIndex : 0;
 
-  return offers.map((offer, index) => ({
+  return offers.map((offer: PlatformProductOffer, index: number) => ({
     ...offer,
     isPrimary: index === safeIndex
   }));
@@ -166,17 +168,18 @@ export function createDraftProduct(values?: Partial<ProductFormInput>): Platform
 
   return {
     ...draft,
-    description: "",
-    salesPageUrl: "",
-    hasSalesPage: false,
-    productType: inferProductType(draft.name, draft.category),
-    invoiceStatementDescriptor: buildInvoiceStatementDescriptor(draft.name),
-    refundWindow: "7_days",
-    supportEmail: "",
-    supportPhone: "",
-    isActive: false,
+    description: values?.description ?? "",
+    salesPageUrl: values?.hasSalesPage ? values.salesPageUrl?.trim() || null : null,
+    hasSalesPage: values?.hasSalesPage ?? false,
+    productType: values?.productType ?? inferProductType(draft.name, draft.category),
+    invoiceStatementDescriptor:
+      values?.invoiceStatementDescriptor || buildInvoiceStatementDescriptor(draft.name),
+    refundWindow: getSafeRefundWindow(values?.refundWindow),
+    supportEmail: values?.supportEmail ?? "",
+    supportPhone: values?.supportPhone ?? "",
+    isActive: values?.isActive ?? false,
     sales: 0,
-    stock: 0,
+    stock: values?.stock ?? 0,
     offers: [],
     coupons: buildDefaultCoupons(),
     updatedAt: new Date().toISOString()
@@ -218,31 +221,31 @@ export function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function getProductDefaults(product?: PlatformProductItem): ProductFormInput {
+  const name = product?.name ?? "";
+  const category = product?.category ?? "Tecnologia";
+
   return {
-    name: product?.name ?? "",
-    category: product?.category ?? "",
+    name,
+    category,
+    description: product?.description ?? "",
+    salesPageUrl: product?.salesPageUrl ?? "",
+    hasSalesPage: product?.hasSalesPage ?? Boolean(product?.salesPageUrl),
+    productType: product?.productType ?? inferProductType(name, category),
+    invoiceStatementDescriptor:
+      product?.invoiceStatementDescriptor || buildInvoiceStatementDescriptor(name),
+    refundWindow: getSafeRefundWindow(product?.refundWindow),
+    supportEmail: product?.supportEmail ?? "",
+    supportPhone: product?.supportPhone ?? "",
+    isActive: product?.isActive ?? false,
     price: product?.price ?? 0,
+    stock: product?.stock ?? 0,
     imageUrl: product?.imageUrl ?? undefined
   };
 }
 
 export function getProductEditorDefaults(product: PlatformProductItem): ProductEditorInput {
   return {
-    name: product.name,
-    category: product.category,
-    description: product.description ?? "",
-    salesPageUrl: product.salesPageUrl ?? "",
-    hasSalesPage: product.hasSalesPage ?? Boolean(product.salesPageUrl),
-    productType: product.productType ?? inferProductType(product.name, product.category),
-    invoiceStatementDescriptor:
-      product.invoiceStatementDescriptor || buildInvoiceStatementDescriptor(product.name),
-    refundWindow: getSafeRefundWindow(product.refundWindow),
-    supportEmail: product.supportEmail ?? "",
-    supportPhone: product.supportPhone ?? "",
-    isActive: product.isActive,
-    price: product.price,
-    stock: product.stock,
-    imageUrl: product.imageUrl ?? undefined,
+    ...getProductDefaults(product),
     offers: ensurePrimaryOffer(product.offers ?? []),
     coupons: product.coupons ?? buildDefaultCoupons()
   };
@@ -269,13 +272,13 @@ export function mergeProductWithEditorValues(
     stock: values.stock,
     imageUrl: values.imageUrl ?? null,
     offers: ensurePrimaryOffer(
-      values.offers.map((offer, index) => ({
+      values.offers.map((offer: ProductEditorInput["offers"][number], index: number) => ({
         ...offer,
         imageUrl: offer.imageUrl ?? null,
         id: offer.id || `${product.id}-offer-${index + 1}`
       }))
     ),
-    coupons: values.coupons.map((coupon, index) => ({
+    coupons: values.coupons.map((coupon: ProductEditorInput["coupons"][number], index: number) => ({
       ...coupon,
       id: coupon.id || `${product.id}-coupon-${index + 1}`,
       code: coupon.code.trim().toUpperCase()
