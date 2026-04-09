@@ -342,7 +342,7 @@ export function ProductsApp() {
       ) : (
         <>
           <section className="pb-3">
-            <div className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-1 justify-items-center gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
               {visibleItems.map((product) => (
                 <div key={product.id} className="w-full max-w-[244px]">
                   <ProductCard
