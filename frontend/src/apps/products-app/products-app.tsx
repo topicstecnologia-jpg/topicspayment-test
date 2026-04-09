@@ -262,7 +262,7 @@ export function ProductsApp() {
 
   return (
     <div className="space-y-4 lg:space-y-5">
-      {isEditing ? null : (
+      {isFocusedProductFlow ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="text-[1.55rem] font-semibold tracking-[-0.06em] text-white sm:text-[1.9rem]">
             Meus Produtos

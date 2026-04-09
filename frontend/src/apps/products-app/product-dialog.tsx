@@ -10,7 +10,7 @@ import {
   useState
 } from "react";
 import { useForm } from "react-hook-form";
-import { Check, ChevronDown, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ImagePlus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { productFormSchema, type ProductFormInput } from "@/schemas/product";
@@ -303,10 +303,10 @@ export function ProductDialog({
         <button
           type="button"
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/58 transition hover:bg-white/[0.08] hover:text-white"
-          aria-label="Fechar"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-[#f5c463]/28 bg-[rgba(245,196,99,0.06)] px-4 py-2.5 text-sm font-medium text-[#f5c463] transition hover:bg-[rgba(245,196,99,0.12)] hover:text-[#ffe2a0]"
         >
-          <X className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para meus produtos
         </button>
       </div>
 
