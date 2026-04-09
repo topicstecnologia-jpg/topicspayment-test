@@ -349,8 +349,8 @@ export function ProductsApp() {
                   <div
                     key={product.id}
                     className={cn(
-                      "relative w-[236px] flex-none sm:w-[252px] lg:w-[268px]",
-                      index === 0 ? "" : "-ml-8 sm:-ml-10 lg:-ml-12"
+                      "relative w-[220px] flex-none sm:w-[232px] lg:w-[244px]",
+                      index === 0 ? "" : "-ml-6 sm:-ml-7 lg:-ml-8"
                     )}
                     style={{ zIndex: index + 1 }}
                   >

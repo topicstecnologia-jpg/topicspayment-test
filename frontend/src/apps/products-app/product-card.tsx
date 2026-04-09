@@ -34,7 +34,7 @@ export function ProductCard({
       tabIndex={0}
       onClick={() => onEdit(product)}
       onKeyDown={handleKeyDown}
-      className="group relative min-h-[344px] overflow-visible rounded-[30px] p-0 text-left outline-none transition duration-300 hover:-translate-y-1 hover:rotate-[-0.25deg] focus-visible:-translate-y-1"
+      className="group relative aspect-[5/7] w-full overflow-visible rounded-[30px] p-0 text-left outline-none transition duration-300 hover:-translate-y-1 hover:rotate-[-0.25deg] focus-visible:-translate-y-1"
     >
       <div className="absolute inset-x-[10%] inset-y-[9%] rounded-[36px] bg-[radial-gradient(circle,rgba(160,96,255,0.34),rgba(97,44,221,0.1)_52%,transparent_76%)] blur-[34px] transition duration-300 group-hover:opacity-100" />
       <div className="absolute inset-x-[18%] top-[-3%] h-20 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.24),transparent_72%)] blur-[22px] opacity-70" />
@@ -45,12 +45,12 @@ export function ProductCard({
           <img
             src={buildProductCover(product)}
             alt={product.name}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,10,36,0.08)_0%,rgba(13,8,28,0.18)_22%,rgba(8,5,20,0.5)_62%,rgba(6,4,16,0.92)_100%)]" />
-          <div className="absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)] opacity-80" />
+          <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)] opacity-80" />
           <div className="absolute inset-x-4 top-5 text-center">
-            <h3 className="line-clamp-2 text-[1.22rem] font-medium leading-[1.02] tracking-[-0.055em] text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.34)]">
+            <h3 className="line-clamp-2 min-h-[2.5rem] text-[1.18rem] font-medium leading-[1.04] tracking-[-0.055em] text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.34)]">
               {product.name}
             </h3>
           </div>
