@@ -5,7 +5,6 @@ import { PackagePlus, Search, Sparkles } from "lucide-react";
 
 import { authApi } from "@/lib/api";
 import { platformDataCache } from "@/lib/platform-data-cache";
-import { cn } from "@/lib/utils";
 import type { ProductEditorInput, ProductFormInput } from "@/schemas/product";
 import type { PlatformProductItem, PlatformProductsResponse } from "@/types/platform";
 import { usePlatformShell } from "@/components/platform/platform-shell-context";
@@ -342,27 +341,18 @@ export function ProductsApp() {
         />
       ) : (
         <>
-          <section className="overflow-x-auto pb-3">
-            <div className="overflow-x-auto">
-              <div className="flex min-w-max items-stretch pr-6 pt-1">
-                {visibleItems.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className={cn(
-                      "relative w-[220px] flex-none sm:w-[232px] lg:w-[244px]",
-                      index === 0 ? "" : "-ml-6 sm:-ml-7 lg:-ml-8"
-                    )}
-                    style={{ zIndex: index + 1 }}
-                  >
-                    <ProductCard
-                      product={product}
-                      isBusy={togglingProductId === product.id}
-                      onEdit={openEditDialog}
-                      onToggle={(selectedProduct) => void handleToggleProduct(selectedProduct)}
-                    />
-                  </div>
-                ))}
-              </div>
+          <section className="pb-3">
+            <div className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {visibleItems.map((product) => (
+                <div key={product.id} className="w-full max-w-[244px]">
+                  <ProductCard
+                    product={product}
+                    isBusy={togglingProductId === product.id}
+                    onEdit={openEditDialog}
+                    onToggle={(selectedProduct) => void handleToggleProduct(selectedProduct)}
+                  />
+                </div>
+              ))}
             </div>
           </section>
 
