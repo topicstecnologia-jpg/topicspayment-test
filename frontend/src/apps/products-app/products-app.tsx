@@ -96,14 +96,15 @@ export function ProductsApp() {
     });
   }, [data, query]);
   const isEditing = Boolean(editingProduct);
+  const isFocusedProductFlow = isEditing || isCreateDialogOpen;
 
   useEffect(() => {
-    setHeroVisible(!isEditing);
+    setHeroVisible(!isFocusedProductFlow);
 
     return () => {
       setHeroVisible(true);
     };
-  }, [isEditing, setHeroVisible]);
+  }, [isFocusedProductFlow, setHeroVisible]);
 
   function openCreateDialog() {
     setEditingProduct(null);
