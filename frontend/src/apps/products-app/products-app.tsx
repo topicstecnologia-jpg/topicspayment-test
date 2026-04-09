@@ -303,68 +303,57 @@ export function ProductsApp() {
           onClose={closeEditor}
           onSubmit={handleSubmitProductEditor}
         />
+      ) : isCreateDialogOpen ? (
+        <ProductDialog
+          product={null}
+          isOpen={isCreateDialogOpen}
+          isSubmitting={isSaving}
+          error={dialogError}
+          onClose={closeCreateDialog}
+          onSubmit={handleSubmitProduct}
+        />
       ) : (
-        <div
-          className={cn(
-            "grid gap-4 xl:items-start",
-            isCreateDialogOpen ? "xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] xl:gap-7" : ""
-          )}
-        >
-          <div className="min-w-0 space-y-4">
-            <section className="overflow-x-auto pb-3">
-              <div className="overflow-x-auto">
-                <div className="flex min-w-max items-stretch pr-6 pt-1">
-                  {visibleItems.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className={cn(
-                        "relative w-[236px] flex-none sm:w-[252px] lg:w-[268px]",
-                        index === 0 ? "" : "-ml-8 sm:-ml-10 lg:-ml-12"
-                      )}
-                      style={{ zIndex: index + 1 }}
-                    >
-                      <ProductCard
-                        product={product}
-                        isBusy={togglingProductId === product.id}
-                        onEdit={openEditDialog}
-                        onToggle={(selectedProduct) => void handleToggleProduct(selectedProduct)}
-                      />
-                    </div>
-                  ))}
+        <>
+          <section className="overflow-x-auto pb-3">
+            <div className="overflow-x-auto">
+              <div className="flex min-w-max items-stretch pr-6 pt-1">
+                {visibleItems.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className={cn(
+                      "relative w-[236px] flex-none sm:w-[252px] lg:w-[268px]",
+                      index === 0 ? "" : "-ml-8 sm:-ml-10 lg:-ml-12"
+                    )}
+                    style={{ zIndex: index + 1 }}
+                  >
+                    <ProductCard
+                      product={product}
+                      isBusy={togglingProductId === product.id}
+                      onEdit={openEditDialog}
+                      onToggle={(selectedProduct) => void handleToggleProduct(selectedProduct)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {!loading && visibleItems.length === 0 ? (
+            <div className="platform-surface-soft rounded-[28px] p-6 text-white">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-white/[0.06] text-[#c4a6ff]">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold">Nenhum produto encontrado</p>
+                  <p className="mt-1 text-[13px] text-white/48">
+                    Ajuste a busca, troque o filtro ou crie um novo produto.
+                  </p>
                 </div>
               </div>
-            </section>
-
-            {!loading && visibleItems.length === 0 ? (
-              <div className="platform-surface-soft rounded-[28px] p-6 text-white">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-white/[0.06] text-[#c4a6ff]">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-semibold">Nenhum produto encontrado</p>
-                    <p className="mt-1 text-[13px] text-white/48">
-                      Ajuste a busca, troque o filtro ou crie um novo produto.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {isCreateDialogOpen ? (
-            <div className="min-w-0 xl:sticky xl:top-6">
-              <ProductDialog
-                product={null}
-                isOpen={isCreateDialogOpen}
-                isSubmitting={isSaving}
-                error={dialogError}
-                onClose={closeCreateDialog}
-                onSubmit={handleSubmitProduct}
-              />
             </div>
           ) : null}
-        </div>
+        </>
       )}
     </div>
   );

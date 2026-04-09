@@ -291,7 +291,7 @@ export function ProductDialog({
   const coverPreview = buildProductCover(previewProduct);
 
   return (
-    <div className="space-y-6 text-white xl:border-l xl:border-white/8 xl:pl-7">
+    <div className="space-y-6 text-white">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-white/32">Novo produto</p>
