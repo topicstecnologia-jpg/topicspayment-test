@@ -139,6 +139,7 @@ const productOfferSchema = z.object({
   cardEnabled: z.boolean().default(true),
   cardInterestPayer: z.enum(["buyer", "seller"]).default("buyer"),
   cardSmartInstallments: z.boolean().default(false),
+  cardInstallmentLimit: z.coerce.number().int().min(1, "Selecione ao menos 1 parcela.").max(12, "Selecione no máximo 12 parcelas.").default(12),
   cardSinglePaymentEnabled: z.boolean().default(true),
   boletoEnabled: z.boolean().default(true),
   boletoDueDays: z.coerce.number().int().min(1, "Informe o vencimento do boleto em dias uteis.").default(1),

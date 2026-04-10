@@ -32,6 +32,7 @@ export interface PlatformProductOfferRecord {
   cardEnabled: boolean;
   cardInterestPayer: PlatformProductOfferCardInterestPayer;
   cardSmartInstallments: boolean;
+  cardInstallmentLimit: number;
   cardSinglePaymentEnabled: boolean;
   boletoEnabled: boolean;
   boletoDueDays: number;
@@ -149,6 +150,10 @@ function normalizeOfferRecord(
     cardEnabled: offer.cardEnabled ?? true,
     cardInterestPayer: offer.cardInterestPayer === "seller" ? "seller" : "buyer",
     cardSmartInstallments: Boolean(offer.cardSmartInstallments),
+    cardInstallmentLimit:
+      typeof offer.cardInstallmentLimit === "number" && Number.isFinite(offer.cardInstallmentLimit)
+        ? Math.min(Math.max(Math.trunc(offer.cardInstallmentLimit), 1), 12)
+        : 12,
     cardSinglePaymentEnabled: offer.cardSinglePaymentEnabled ?? true,
     boletoEnabled: offer.boletoEnabled ?? true,
     boletoDueDays:

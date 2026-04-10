@@ -51,7 +51,7 @@ type ProductEditorOffer = ProductEditorInput["offers"][number];
 
 const editorSections = [
   { id: "dashboard", label: "Dashboard do produto", icon: BarChart3 },
-  { id: "details", label: "Informacoes do produto", icon: Info },
+  { id: "details", label: "Informações do produto", icon: Info },
   { id: "offers", label: "Ofertas", icon: Layers3 },
   { id: "coupons", label: "Cupons", icon: BadgePercent }
 ] as const satisfies Array<{
@@ -61,7 +61,7 @@ const editorSections = [
 }>;
 
 const billingCycleLabels: Record<PlatformProductOfferBillingCycle, string> = {
-  one_time: "Pagamento único",
+  one_time: "Cobrança única",
   monthly: "Mensal",
   annual: "Anual"
 };
@@ -70,7 +70,7 @@ const billingCycleOptions: Array<{
   value: PlatformProductOfferBillingCycle;
   label: string;
 }> = [
-  { value: "one_time", label: "Pagamento único" },
+  { value: "one_time", label: "Cobrança única" },
   { value: "monthly", label: "Mensal" },
   { value: "annual", label: "Anual" }
 ];
@@ -82,6 +82,14 @@ const boletoDueDayOptions = [
   { value: "5", label: "5 dias" },
   { value: "7", label: "7 dias" }
 ] as const;
+
+const cardInstallmentOptions: Array<{ value: string; label: string }> = Array.from(
+  { length: 12 },
+  (_, index) => ({
+    value: String(index + 1),
+    label: `${index + 1}x`
+  })
+);
 
 const discountTypeLabels: Record<PlatformProductCouponDiscountType, string> = {
   percent: "Percentual",
@@ -298,6 +306,7 @@ function buildEmptyOffer(isPrimary: boolean): ProductEditorOffer {
     cardEnabled: true,
     cardInterestPayer: "buyer",
     cardSmartInstallments: false,
+    cardInstallmentLimit: 12,
     cardSinglePaymentEnabled: true,
     boletoEnabled: true,
     boletoDueDays: 1,
@@ -329,6 +338,7 @@ function isOfferUntouched(offer: ProductEditorOffer | undefined) {
     offer.cardEnabled === true &&
     offer.cardInterestPayer === "buyer" &&
     offer.cardSmartInstallments === false &&
+    Number(offer.cardInstallmentLimit ?? 12) === 12 &&
     offer.cardSinglePaymentEnabled === true &&
     offer.boletoEnabled === true &&
     Number(offer.boletoDueDays ?? 1) === 1 &&
@@ -583,8 +593,6 @@ export function ProductEditor({
   const selectedOfferCheckoutUrl =
     selectedOfferId ? buildOfferCheckoutUrl(previewProduct.salesPageUrl, selectedOfferId) : null;
   const selectedOfferPreview = selectedOffer?.imageUrl || coverPreview;
-  const selectedOfferCheckoutDescriptionLength = selectedOffer?.checkoutDescription?.length ?? 0;
-  const selectedOfferDescriptionLength = selectedOffer?.description?.length ?? 0;
   const isCreatingNewOffer =
     selectedOfferIndex != null && creatingOfferIndex === selectedOfferIndex;
   const isBusy = isSubmitting || isDeleting;
@@ -804,6 +812,12 @@ export function ProductEditor({
       return null;
     }
 
+    const fieldLabelClass = "text-sm font-medium text-white/78";
+    const inputClass =
+      "h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10";
+    const textareaClass =
+      "w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10";
+
     return (
       <div className="space-y-5">
         <input type="hidden" {...register(`offers.${selectedOfferIndex}.billingCycle` as const)} />
@@ -818,20 +832,14 @@ export function ProductEditor({
               className="inline-flex items-center justify-center gap-2 self-start rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
-              Voltar para ofertas
+              Voltar
             </button>
 
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/32">
-                {isCreatingNewOffer ? "Nova oferta" : "Editar oferta"}
-              </p>
-              <h4 className="mt-2 text-[1.28rem] font-semibold tracking-[-0.05em] text-white">
+              <h4 className="text-[1.28rem] font-semibold tracking-[-0.05em] text-white">
                 {selectedOffer.title?.trim() ||
-                  (isCreatingNewOffer ? "Preencha os dados da nova oferta" : `Oferta ${selectedOfferIndex + 1}`)}
+                  (isCreatingNewOffer ? "Nova oferta" : `Oferta ${selectedOfferIndex + 1}`)}
               </h4>
-              <p className="mt-2 text-[13px] leading-6 text-white/46">
-                Cadastre os campos manualmente antes de salvar a oferta.
-              </p>
             </div>
           </div>
 
@@ -861,65 +869,63 @@ export function ProductEditor({
 
         {offersFeedback ? <p className="text-sm text-white/58">{offersFeedback}</p> : null}
 
-        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-          <div className="grid gap-5 xl:grid-cols-[165px_minmax(0,1fr)] xl:items-start">
-            <div className="space-y-2">
-              <input
-                ref={offerImageInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={handleOfferImageInputChange}
-              />
+        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+          <div className="border-b border-white/8 px-5 py-4">
+            <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Nova oferta</h5>
+          </div>
 
-              <button
-                type="button"
-                onClick={() => offerImageInputRef.current?.click()}
-                className="group relative flex aspect-square w-full items-end overflow-hidden rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] text-left transition hover:border-white/18 hover:bg-white/[0.05]"
-              >
-                <img
-                  src={selectedOfferPreview}
-                  alt={selectedOffer.title?.trim() || "Nova oferta"}
-                  className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-500 group-hover:scale-[1.02]"
+          <div className="space-y-5 px-5 py-5 lg:px-6 lg:py-6">
+            <div className="grid gap-5 xl:grid-cols-[165px_minmax(0,1fr)] xl:items-start">
+              <div className="space-y-2">
+                <input
+                  ref={offerImageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={handleOfferImageInputChange}
                 />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,9,14,0.08)_0%,rgba(7,9,14,0.62)_55%,rgba(7,9,14,0.88)_100%)]" />
-                <div className="relative z-10 flex w-full flex-col items-center gap-3 px-4 py-4 text-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/12 bg-white/[0.08] text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)]">
-                    <ImagePlus className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Imagem da oferta</p>
-                    <p className="mt-1 text-[11px] leading-5 text-white/50">Clique para enviar PNG, JPG ou WEBP.</p>
-                  </div>
-                </div>
-              </button>
 
-              {selectedOffer.imageUrl ? (
                 <button
                   type="button"
-                  onClick={() =>
-                    setValue(`offers.${selectedOfferIndex}.imageUrl`, null, {
-                      shouldDirty: true,
-                      shouldValidate: true
-                    })
-                  }
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white"
+                  onClick={() => offerImageInputRef.current?.click()}
+                  className="group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] transition hover:border-white/18 hover:bg-white/[0.05]"
                 >
-                  Remover imagem
+                  <img
+                    src={selectedOfferPreview}
+                    alt={selectedOffer.title?.trim() || "Nova oferta"}
+                    className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-500 group-hover:scale-[1.02]"
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,9,14,0.18)_0%,rgba(7,9,14,0.56)_100%)]" />
+                  <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/12 bg-white/[0.08] text-white shadow-[0_16px_36px_rgba(0,0,0,0.2)]">
+                    <ImagePlus className="h-5 w-5" />
+                  </span>
                 </button>
-              ) : null}
 
-              {selectedOfferErrors?.imageUrl ? (
-                <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.imageUrl.message}</p>
-              ) : null}
-            </div>
+                {selectedOffer.imageUrl ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue(`offers.${selectedOfferIndex}.imageUrl`, null, {
+                        shouldDirty: true,
+                        shouldValidate: true
+                      })
+                    }
+                    className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white"
+                  >
+                    Remover imagem
+                  </button>
+                ) : null}
 
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+                {selectedOfferErrors?.imageUrl ? (
+                  <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.imageUrl.message}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white/78">Nome da oferta</label>
+                  <label className={fieldLabelClass}>Nome</label>
                   <input
-                    className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
+                    className={inputClass}
                     placeholder="Informe o nome da sua oferta"
                     {...register(`offers.${selectedOfferIndex}.title` as const)}
                   />
@@ -929,187 +935,204 @@ export function ProductEditor({
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-white/78">Descrição no checkout</label>
-                    <span className="text-[11px] text-white/34">{selectedOfferCheckoutDescriptionLength}/180</span>
-                  </div>
+                  <label className={fieldLabelClass}>Descrição do produto no checkout</label>
                   <input
-                    className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
-                    placeholder="Texto exibido no checkout"
+                    className={inputClass}
+                    placeholder="Quando preenchido, este texto aparece no checkout"
                     {...register(`offers.${selectedOfferIndex}.checkoutDescription` as const)}
                   />
                   {selectedOfferErrors?.checkoutDescription ? (
                     <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.checkoutDescription.message}</p>
-                  ) : (
-                    <p className="text-[11px] leading-5 text-white/34">
-                      Quando preenchido, este campo pode substituir o nome da oferta no checkout.
-                    </p>
-                  )}
+                  ) : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className={fieldLabelClass}>Descrição</label>
+                  <textarea
+                    rows={5}
+                    className={textareaClass}
+                    placeholder="Forneça um texto que descreva melhor sua oferta"
+                    {...register(`offers.${selectedOfferIndex}.description` as const)}
+                  />
+                  {selectedOfferErrors?.description ? (
+                    <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.description.message}</p>
+                  ) : null}
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium text-white/78">Descrição</label>
-                  <span className="text-[11px] text-white/34">{selectedOfferDescriptionLength}/600</span>
-                </div>
-                <textarea
-                  rows={5}
-                  className="w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
-                  placeholder="Forneça um texto que descreva melhor sua oferta."
-                  {...register(`offers.${selectedOfferIndex}.description` as const)}
-                />
-                {selectedOfferErrors?.description ? (
-                  <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.description.message}</p>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <PlatformSelect
-                  label="Tipo de cobrança"
-                  value={selectedOffer.billingCycle ?? "one_time"}
-                  options={billingCycleOptions}
-                  onChange={(nextValue) =>
-                    setValue(`offers.${selectedOfferIndex}.billingCycle`, nextValue, {
+            <div className="space-y-4 border-t border-white/8 pt-5">
+              <div className="flex items-center justify-between gap-4">
+                <span className={fieldLabelClass}>Ativar oferta?</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setValue(`offers.${selectedOfferIndex}.active`, !selectedOffer.active, {
                       shouldDirty: true,
                       shouldValidate: true
                     })
                   }
-                />
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white/78">Preço de ancoragem</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
-                    placeholder="Valor comparativo"
-                    {...register(`offers.${selectedOfferIndex}.anchorPrice` as const, {
-                      setValueAs: (value) => (value === "" ? undefined : Number(value))
-                    })}
-                  />
-                  {selectedOfferErrors?.anchorPrice ? (
-                    <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.anchorPrice.message}</p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white/78">Preço do produto</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
-                    placeholder="Informe um valor"
-                    {...register(`offers.${selectedOfferIndex}.price` as const, { valueAsNumber: true })}
-                  />
-                  {selectedOfferErrors?.price ? (
-                    <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.price.message}</p>
-                  ) : null}
-                </div>
+                  className="inline-flex items-center"
+                  aria-pressed={selectedOffer.active}
+                >
+                  <span
+                    className={cn(
+                      "relative inline-flex h-7 w-12 rounded-full border transition",
+                      selectedOffer.active
+                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                        : "border-white/10 bg-white/[0.08]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                        selectedOffer.active ? "left-[25px]" : "left-0.5"
+                      )}
+                    />
+                  </span>
+                </button>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white/78">Link do checkout</label>
-                  <div className="flex min-h-[48px] items-center rounded-[18px] border border-white/10 bg-white/[0.03] px-4 text-sm text-white/60">
-                    {selectedOfferCheckoutUrl ??
-                      "Preencha a URL da página de vendas do produto para gerar o link desta oferta."}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white/78">Quantidade de itens</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10"
-                    placeholder="1"
-                    {...register(`offers.${selectedOfferIndex}.itemCount` as const, { valueAsNumber: true })}
-                  />
-                  {selectedOfferErrors?.itemCount ? (
-                    <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.itemCount.message}</p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-          <div className="grid gap-3 md:grid-cols-3">
-            {[
-              {
-                key: "active",
-                label: "Ativar oferta?",
-                description: "Quando desligada, a oferta continua salva, mas fica fora do fluxo principal."
-              },
-              {
-                key: "isFree",
-                label: "Oferta grátis",
-                description: "Use para experiências gratuitas ou ofertas sem cobrança imediata."
-              },
-              {
-                key: "passFixedFeeToBuyer",
-                label: "Repassar taxa fixa",
-                description: "Repassa a taxa fixa da operação para o comprador quando fizer sentido."
-              }
-            ].map((toggle) => {
-              const checked = Boolean(selectedOffer[toggle.key as keyof ProductEditorOffer]);
-
-              return (
+              <div className="flex items-center justify-between gap-4">
+                <span className={fieldLabelClass}>Oferta grátis</span>
                 <button
-                  key={toggle.key}
+                  type="button"
+                  onClick={() =>
+                    setValue(`offers.${selectedOfferIndex}.isFree`, !selectedOffer.isFree, {
+                      shouldDirty: true,
+                      shouldValidate: true
+                    })
+                  }
+                  className="inline-flex items-center"
+                  aria-pressed={selectedOffer.isFree}
+                >
+                  <span
+                    className={cn(
+                      "relative inline-flex h-7 w-12 rounded-full border transition",
+                      selectedOffer.isFree
+                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                        : "border-white/10 bg-white/[0.08]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                        selectedOffer.isFree ? "left-[25px]" : "left-0.5"
+                      )}
+                    />
+                  </span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <span className={fieldLabelClass}>Repassar taxa fixa para o comprador</span>
+                <button
                   type="button"
                   onClick={() =>
                     setValue(
-                      `offers.${selectedOfferIndex}.${toggle.key}` as any,
-                      !checked,
+                      `offers.${selectedOfferIndex}.passFixedFeeToBuyer`,
+                      !selectedOffer.passFixedFeeToBuyer,
                       { shouldDirty: true, shouldValidate: true }
                     )
                   }
-                  className={cn(
-                    "rounded-[22px] border px-4 py-4 text-left transition",
-                    checked
-                      ? "border-[#8c52ff]/44 bg-[linear-gradient(180deg,rgba(140,82,255,0.16),rgba(140,82,255,0.05))]"
-                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
-                  )}
+                  className="inline-flex items-center"
+                  aria-pressed={selectedOffer.passFixedFeeToBuyer}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-white">{toggle.label}</span>
+                  <span
+                    className={cn(
+                      "relative inline-flex h-7 w-12 rounded-full border transition",
+                      selectedOffer.passFixedFeeToBuyer
+                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                        : "border-white/10 bg-white/[0.08]"
+                    )}
+                  >
                     <span
                       className={cn(
-                        "relative inline-flex h-7 w-12 rounded-full border transition",
-                        checked
-                          ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                          : "border-white/10 bg-white/[0.08]"
+                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                        selectedOffer.passFixedFeeToBuyer ? "left-[25px]" : "left-0.5"
                       )}
-                    >
-                      <span
-                        className={cn(
-                          "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                          checked ? "left-[25px]" : "left-0.5"
-                        )}
-                      />
-                    </span>
-                  </div>
-                  <p className="mt-3 text-[12px] leading-5 text-white/40">{toggle.description}</p>
+                    />
+                  </span>
                 </button>
-              );
-            })}
+              </div>
+            </div>
+
+            <PlatformSelect
+              label="Tipo de cobrança"
+              value={selectedOffer.billingCycle ?? "one_time"}
+              options={billingCycleOptions}
+              onChange={(nextValue) =>
+                setValue(`offers.${selectedOfferIndex}.billingCycle`, nextValue, {
+                  shouldDirty: true,
+                  shouldValidate: true
+                })
+              }
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className={fieldLabelClass}>Preço de ancoragem</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={inputClass}
+                  placeholder="Informe um valor"
+                  {...register(`offers.${selectedOfferIndex}.anchorPrice` as const, {
+                    setValueAs: (value) => (value === "" ? undefined : Number(value))
+                  })}
+                />
+                {selectedOfferErrors?.anchorPrice ? (
+                  <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.anchorPrice.message}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className={fieldLabelClass}>Preço do produto</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={inputClass}
+                  placeholder="Informe um valor"
+                  {...register(`offers.${selectedOfferIndex}.price` as const, { valueAsNumber: true })}
+                />
+                {selectedOfferErrors?.price ? (
+                  <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.price.message}</p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="space-y-1.5">
+                <label className={fieldLabelClass}>Link do checkout</label>
+                <div className="flex min-h-[48px] items-center rounded-[18px] border border-white/10 bg-white/[0.03] px-4 text-sm text-white/60">
+                  {selectedOfferCheckoutUrl ??
+                    "Preencha a URL da página de vendas do produto para gerar o link desta oferta."}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className={fieldLabelClass}>Quantidade de itens</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className={inputClass}
+                  placeholder="1"
+                  {...register(`offers.${selectedOfferIndex}.itemCount` as const, { valueAsNumber: true })}
+                />
+                {selectedOfferErrors?.itemCount ? (
+                  <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.itemCount.message}</p>
+                ) : null}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h5 className="text-[1.05rem] font-semibold tracking-[-0.04em] text-white">Cartão de crédito</h5>
-              <p className="mt-2 text-[13px] leading-6 text-white/46">
-                Configure a cobrança principal por cartão e o comportamento do parcelamento.
-              </p>
-            </div>
+        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+          <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
+            <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Cartão de Crédito</h5>
 
             <button
               type="button"
@@ -1119,12 +1142,12 @@ export function ProductEditor({
                   shouldValidate: true
                 })
               }
-              className="inline-flex items-center gap-3 self-start"
+              className="inline-flex items-center"
               aria-pressed={selectedOffer.cardEnabled}
             >
               <span
                 className={cn(
-                  "relative inline-flex h-8 w-14 rounded-full border transition",
+                  "relative inline-flex h-7 w-12 rounded-full border transition",
                   selectedOffer.cardEnabled
                     ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
                     : "border-white/10 bg-white/[0.08]"
@@ -1132,20 +1155,17 @@ export function ProductEditor({
               >
                 <span
                   className={cn(
-                    "absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.cardEnabled ? "left-[30px]" : "left-1"
+                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                    selectedOffer.cardEnabled ? "left-[25px]" : "left-0.5"
                   )}
                 />
-              </span>
-              <span className="text-sm font-semibold text-white">
-                {selectedOffer.cardEnabled ? "Cartão habilitado" : "Cartão desabilitado"}
               </span>
             </button>
           </div>
 
-          <div className={cn("mt-5 space-y-4", !selectedOffer.cardEnabled && "opacity-45")}>
+          <div className={cn("space-y-4 px-5 py-5 lg:px-6 lg:py-6", !selectedOffer.cardEnabled && "opacity-45")}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-white/78">Cobrança de juros</label>
+              <label className={fieldLabelClass}>Cobrança de juros</label>
               <div className="grid gap-3 md:grid-cols-2">
                 {[
                   { value: "buyer" as PlatformProductOfferCardInterestPayer, label: "Juros pagos pelo cliente" },
@@ -1186,83 +1206,91 @@ export function ProductEditor({
               </div>
             </div>
 
-            <button
-              type="button"
-              disabled={!selectedOffer.cardEnabled}
-              onClick={() =>
-                setValue(
-                  `offers.${selectedOfferIndex}.cardSmartInstallments`,
-                  !selectedOffer.cardSmartInstallments,
-                  { shouldDirty: true, shouldValidate: true }
-                )
-              }
-              className="flex w-full items-start justify-between gap-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.05] disabled:cursor-not-allowed"
-            >
-              <div>
-                <p className="text-sm font-semibold text-white">Permitir parcelamento inteligente?</p>
-                <p className="mt-2 text-[12px] leading-5 text-white/40">
-                  Use essa opção para simular uma composição de parcelas mais flexível no cartão.
-                </p>
-              </div>
-              <span
+            <div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3.5">
+              <span className={fieldLabelClass}>Permitir parcelamento inteligente?</span>
+              <button
+                type="button"
+                disabled={!selectedOffer.cardEnabled}
+                onClick={() =>
+                  setValue(
+                    `offers.${selectedOfferIndex}.cardSmartInstallments`,
+                    !selectedOffer.cardSmartInstallments,
+                    { shouldDirty: true, shouldValidate: true }
+                  )
+                }
+                className="inline-flex items-center disabled:cursor-not-allowed"
+                aria-pressed={selectedOffer.cardSmartInstallments}
+              >
+                <span
+                  className={cn(
+                    "relative inline-flex h-7 w-12 rounded-full border transition",
+                    selectedOffer.cardSmartInstallments
+                      ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                      : "border-white/10 bg-white/[0.08]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                      selectedOffer.cardSmartInstallments ? "left-[25px]" : "left-0.5"
+                    )}
+                  />
+                </span>
+              </button>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
+              <PlatformSelect
+                label="Quantidade máxima de parcelas"
+                value={`${selectedOffer.cardInstallmentLimit ?? 12}`}
+                options={cardInstallmentOptions}
+                onChange={(nextValue) =>
+                  setValue(`offers.${selectedOfferIndex}.cardInstallmentLimit`, Number(nextValue), {
+                    shouldDirty: true,
+                    shouldValidate: true
+                  })
+                }
+                error={selectedOfferErrors?.cardInstallmentLimit?.message}
+              />
+
+              <button
+                type="button"
+                disabled={!selectedOffer.cardEnabled}
+                onClick={() =>
+                  setValue(
+                    `offers.${selectedOfferIndex}.cardSinglePaymentEnabled`,
+                    !selectedOffer.cardSinglePaymentEnabled,
+                    { shouldDirty: true, shouldValidate: true }
+                  )
+                }
                 className={cn(
-                  "relative mt-0.5 inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.cardSmartInstallments
-                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                    : "border-white/10 bg-white/[0.08]"
+                  "flex w-full items-center gap-3 rounded-[20px] border px-4 py-4 text-left transition disabled:cursor-not-allowed",
+                  selectedOffer.cardSinglePaymentEnabled
+                    ? "border-[#8c52ff]/28 bg-[linear-gradient(180deg,rgba(140,82,255,0.12),rgba(140,82,255,0.04))]"
+                    : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                 )}
               >
                 <span
                   className={cn(
-                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.cardSmartInstallments ? "left-[25px]" : "left-0.5"
+                    "flex h-5 w-5 items-center justify-center rounded-md border transition",
+                    selectedOffer.cardSinglePaymentEnabled
+                      ? "border-[#8c52ff]/40 bg-[#8c52ff]/24 text-white"
+                      : "border-white/18 bg-transparent text-transparent"
                   )}
-                />
-              </span>
-            </button>
-
-            <button
-              type="button"
-              disabled={!selectedOffer.cardEnabled}
-              onClick={() =>
-                setValue(
-                  `offers.${selectedOfferIndex}.cardSinglePaymentEnabled`,
-                  !selectedOffer.cardSinglePaymentEnabled,
-                  { shouldDirty: true, shouldValidate: true }
-                )
-              }
-              className={cn(
-                "flex w-full items-center gap-3 rounded-[20px] border px-4 py-4 text-left transition disabled:cursor-not-allowed",
-                selectedOffer.cardSinglePaymentEnabled
-                  ? "border-[#8c52ff]/28 bg-[linear-gradient(180deg,rgba(140,82,255,0.12),rgba(140,82,255,0.04))]"
-                  : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
-              )}
-            >
-              <span
-                className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-md border transition",
-                  selectedOffer.cardSinglePaymentEnabled
-                    ? "border-[#8c52ff]/40 bg-[#8c52ff]/24 text-white"
-                    : "border-white/18 bg-transparent text-transparent"
-                )}
-              >
-                <Check className="h-3.5 w-3.5" />
-              </span>
-              <span className="text-sm font-semibold text-white">
-                {formatCurrency(Number(selectedOffer.price ?? 0))} (à vista)
-              </span>
-            </button>
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                <span className="text-sm font-semibold text-white">
+                  {formatCurrency(Number(selectedOffer.price ?? 0))} (À vista)
+                </span>
+              </button>
+            </div>
           </div>
         </section>
 
-        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h5 className="text-[1.05rem] font-semibold tracking-[-0.04em] text-white">Boleto bancário</h5>
-              <p className="mt-2 text-[13px] leading-6 text-white/46">
-                Ajuste o vencimento e o comportamento do boleto desta oferta.
-              </p>
-            </div>
+        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+          <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
+            <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Boleto Bancário</h5>
 
             <button
               type="button"
@@ -1272,12 +1300,12 @@ export function ProductEditor({
                   shouldValidate: true
                 })
               }
-              className="inline-flex items-center gap-3 self-start"
+              className="inline-flex items-center"
               aria-pressed={selectedOffer.boletoEnabled}
             >
               <span
                 className={cn(
-                  "relative inline-flex h-8 w-14 rounded-full border transition",
+                  "relative inline-flex h-7 w-12 rounded-full border transition",
                   selectedOffer.boletoEnabled
                     ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
                     : "border-white/10 bg-white/[0.08]"
@@ -1285,18 +1313,15 @@ export function ProductEditor({
               >
                 <span
                   className={cn(
-                    "absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.boletoEnabled ? "left-[30px]" : "left-1"
+                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                    selectedOffer.boletoEnabled ? "left-[25px]" : "left-0.5"
                   )}
                 />
-              </span>
-              <span className="text-sm font-semibold text-white">
-                {selectedOffer.boletoEnabled ? "Boleto habilitado" : "Boleto desabilitado"}
               </span>
             </button>
           </div>
 
-          <div className={cn("mt-5 grid gap-4 md:grid-cols-2", !selectedOffer.boletoEnabled && "opacity-45")}>
+          <div className={cn("space-y-4 px-5 py-5 lg:px-6 lg:py-6", !selectedOffer.boletoEnabled && "opacity-45")}>
             <PlatformSelect
               label="Vencimento em dias úteis"
               value={`${selectedOffer.boletoDueDays ?? 1}` as (typeof boletoDueDayOptions)[number]["value"]}
@@ -1310,17 +1335,48 @@ export function ProductEditor({
                   shouldValidate: true
                 })
               }
-              helperText="Defina em quantos dias úteis o boleto deve vencer."
             />
 
+            <div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3.5">
+              <span className={fieldLabelClass}>Habilitar boleto infinito?</span>
+              <button
+                type="button"
+                disabled={!selectedOffer.boletoEnabled}
+                onClick={() =>
+                  setValue(`offers.${selectedOfferIndex}.boletoInfinite`, !selectedOffer.boletoInfinite, {
+                    shouldDirty: true,
+                    shouldValidate: true
+                  })
+                }
+                className="inline-flex items-center disabled:cursor-not-allowed"
+                aria-pressed={selectedOffer.boletoInfinite}
+              >
+                <span
+                  className={cn(
+                    "relative inline-flex h-7 w-12 rounded-full border transition",
+                    selectedOffer.boletoInfinite
+                      ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                      : "border-white/10 bg-white/[0.08]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                      selectedOffer.boletoInfinite ? "left-[25px]" : "left-0.5"
+                    )}
+                  />
+                </span>
+              </button>
+            </div>
+
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-white/78">Quantidade de dias após vencimento</label>
+              <label className={fieldLabelClass}>Quantidade de dias após vencimento</label>
               <input
                 type="number"
                 min="1"
                 step="1"
                 disabled={!selectedOffer.boletoEnabled}
-                className="h-12 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
                 placeholder="30"
                 {...register(`offers.${selectedOfferIndex}.boletoAfterDueDays` as const, {
                   valueAsNumber: true
@@ -1330,28 +1386,28 @@ export function ProductEditor({
                 <p className="text-xs text-[#ff9db1]">{selectedOfferErrors.boletoAfterDueDays.message}</p>
               ) : null}
             </div>
+          </div>
+        </section>
+
+        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
+            <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Pix Manual</h5>
 
             <button
               type="button"
-              disabled={!selectedOffer.boletoEnabled}
               onClick={() =>
-                setValue(`offers.${selectedOfferIndex}.boletoInfinite`, !selectedOffer.boletoInfinite, {
+                setValue(`offers.${selectedOfferIndex}.pixManualEnabled`, !selectedOffer.pixManualEnabled, {
                   shouldDirty: true,
                   shouldValidate: true
                 })
               }
-              className="flex w-full items-start justify-between gap-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-left transition hover:bg-white/[0.05] disabled:cursor-not-allowed md:col-span-2"
+              className="inline-flex items-center"
+              aria-pressed={selectedOffer.pixManualEnabled}
             >
-              <div>
-                <p className="text-sm font-semibold text-white">Habilitar boleto infinito?</p>
-                <p className="mt-2 text-[12px] leading-5 text-white/40">
-                  Mantém o boleto renovável dentro do período configurado após o vencimento.
-                </p>
-              </div>
               <span
                 className={cn(
-                  "relative mt-0.5 inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.boletoInfinite
+                  "relative inline-flex h-7 w-12 rounded-full border transition",
+                  selectedOffer.pixManualEnabled
                     ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
                     : "border-white/10 bg-white/[0.08]"
                 )}
@@ -1359,7 +1415,7 @@ export function ProductEditor({
                 <span
                   className={cn(
                     "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.boletoInfinite ? "left-[25px]" : "left-0.5"
+                    selectedOffer.pixManualEnabled ? "left-[25px]" : "left-0.5"
                   )}
                 />
               </span>
@@ -1367,88 +1423,40 @@ export function ProductEditor({
           </div>
         </section>
 
-        <section className="platform-surface rounded-[30px] p-5 lg:p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h5 className="text-[1.05rem] font-semibold tracking-[-0.04em] text-white">Pix manual</h5>
-                  <p className="mt-2 text-[13px] leading-6 text-white/46">
-                    Pagamento instantâneo via QR Code ou código Pix.
-                  </p>
-                </div>
+        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
+            <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">
+              Descontos por Método de Pagamento
+            </h5>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setValue(`offers.${selectedOfferIndex}.pixManualEnabled`, !selectedOffer.pixManualEnabled, {
-                      shouldDirty: true,
-                      shouldValidate: true
-                    })
-                  }
-                  className="inline-flex items-center gap-3 self-start"
-                  aria-pressed={selectedOffer.pixManualEnabled}
-                >
-                  <span
-                    className={cn(
-                      "relative inline-flex h-8 w-14 rounded-full border transition",
-                      selectedOffer.pixManualEnabled
-                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                        : "border-white/10 bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                        selectedOffer.pixManualEnabled ? "left-[30px]" : "left-1"
-                      )}
-                    />
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h5 className="text-[1.05rem] font-semibold tracking-[-0.04em] text-white">
-                    Descontos por método de pagamento
-                  </h5>
-                  <p className="mt-2 text-[13px] leading-6 text-white/46">
-                    Habilite esta opção quando quiser diferenciar condições por cartão, boleto ou Pix.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setValue(
-                      `offers.${selectedOfferIndex}.paymentMethodDiscountsEnabled`,
-                      !selectedOffer.paymentMethodDiscountsEnabled,
-                      { shouldDirty: true, shouldValidate: true }
-                    )
-                  }
-                  className="inline-flex items-center gap-3 self-start"
-                  aria-pressed={selectedOffer.paymentMethodDiscountsEnabled}
-                >
-                  <span
-                    className={cn(
-                      "relative inline-flex h-8 w-14 rounded-full border transition",
-                      selectedOffer.paymentMethodDiscountsEnabled
-                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                        : "border-white/10 bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                        selectedOffer.paymentMethodDiscountsEnabled ? "left-[30px]" : "left-1"
-                      )}
-                    />
-                  </span>
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setValue(
+                  `offers.${selectedOfferIndex}.paymentMethodDiscountsEnabled`,
+                  !selectedOffer.paymentMethodDiscountsEnabled,
+                  { shouldDirty: true, shouldValidate: true }
+                )
+              }
+              className="inline-flex items-center"
+              aria-pressed={selectedOffer.paymentMethodDiscountsEnabled}
+            >
+              <span
+                className={cn(
+                  "relative inline-flex h-7 w-12 rounded-full border transition",
+                  selectedOffer.paymentMethodDiscountsEnabled
+                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
+                    : "border-white/10 bg-white/[0.08]"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+                    selectedOffer.paymentMethodDiscountsEnabled ? "left-[25px]" : "left-0.5"
+                  )}
+                />
+              </span>
+            </button>
           </div>
         </section>
       </div>

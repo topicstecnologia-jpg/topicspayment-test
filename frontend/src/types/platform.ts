@@ -45,6 +45,7 @@ export interface PlatformProductOffer {
   cardEnabled: boolean;
   cardInterestPayer: PlatformProductOfferCardInterestPayer;
   cardSmartInstallments: boolean;
+  cardInstallmentLimit: number;
   cardSinglePaymentEnabled: boolean;
   boletoEnabled: boolean;
   boletoDueDays: number;
