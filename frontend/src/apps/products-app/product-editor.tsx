@@ -1833,7 +1833,7 @@ export function ProductEditor({
                   <div className="space-y-6" data-section="offers">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <h3 className="text-[1.2rem] font-semibold tracking-[-0.05em] text-white">Ofertas do produto</h3>
+                        <h3 className="text-[1.65rem] font-semibold tracking-[-0.07em] text-white">Ofertas do produto</h3>
                         <p className="mt-2 text-[13px] leading-6 text-white/46">
                           Crie planos, variações e condições comerciais no mesmo visual premium da plataforma.
                         </p>
@@ -1886,7 +1886,7 @@ export function ProductEditor({
                       </div>
                     ) : (
                       <div className="space-y-5">
-                        <div className="hidden xl:grid xl:grid-cols-[120px_minmax(0,1.7fr)_130px_160px_150px_130px_320px] xl:items-center xl:px-4">
+                        <div className="hidden xl:grid xl:grid-cols-[112px_minmax(0,1.7fr)_120px_140px_140px_132px_300px] xl:items-center xl:gap-x-4 xl:px-4">
                           {["Código", "Nome", "Preço", "Quantidade de itens", "Atualizado em", "Ativo?", "Ações"].map((label) => (
                             <p key={label} className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28">
                               {label}
@@ -1920,7 +1920,7 @@ export function ProductEditor({
                                 <input type="hidden" {...register(`offers.${index}.billingCycle` as const)} />
                                 <input type="hidden" {...register(`offers.${index}.active` as const)} />
 
-                                <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[120px_minmax(0,1.7fr)_130px_160px_150px_130px_320px] xl:items-center">
+                                <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[112px_minmax(0,1.7fr)_120px_140px_140px_132px_300px] xl:items-center xl:gap-x-4">
                                   <div className="space-y-1">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Código</p>
                                     <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/78">
@@ -1928,14 +1928,14 @@ export function ProductEditor({
                                     </span>
                                   </div>
 
-                                  <div className="min-w-0 space-y-1">
+                                  <div className="min-w-0 space-y-1 xl:pr-2">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Nome</p>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="truncate text-base font-semibold text-white">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <p className="min-w-0 truncate text-base font-semibold text-white">
                                         {currentOffer?.title?.trim() || `Oferta ${index + 1}`}
                                       </p>
                                       {isPrimary ? (
-                                        <span className="inline-flex rounded-full bg-[linear-gradient(135deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)] px-2.5 py-1 text-[11px] font-semibold text-[#171a24]">
+                                        <span className="inline-flex shrink-0 rounded-full bg-[linear-gradient(135deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)] px-2.5 py-1 text-[11px] font-semibold text-[#171a24]">
                                           Principal
                                         </span>
                                       ) : null}
@@ -1945,26 +1945,26 @@ export function ProductEditor({
                                     </p>
                                   </div>
 
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 xl:min-w-0">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Preço</p>
                                     <p className="text-sm font-semibold text-white">
                                       {formatCurrency(Number(currentOffer?.price ?? 0))}
                                     </p>
                                   </div>
 
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 xl:min-w-0">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Quantidade de itens</p>
                                     <p className="text-sm text-white/72">
                                       {currentOffer?.itemCount ?? 1} {(currentOffer?.itemCount ?? 1) === 1 ? "item" : "itens"}
                                     </p>
                                   </div>
 
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 xl:min-w-0">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Atualizado em</p>
                                     <p className="text-sm text-white/72">{formatUpdatedAt(previewProduct.updatedAt)}</p>
                                   </div>
 
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 xl:min-w-0">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Ativo?</p>
                                     <PlatformToggle
                                       pressed={isOfferActive}
@@ -1974,12 +1974,12 @@ export function ProductEditor({
                                     />
                                   </div>
 
-                                  <div className="flex flex-wrap gap-2 xl:justify-end">
+                                  <div className="flex flex-wrap gap-2 xl:flex-nowrap xl:justify-end">
                                     <button
                                       type="button"
                                       onClick={() => openOfferEditor(index)}
                                       className={cn(
-                                        "inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition",
+                                        "inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-[13px] font-medium transition",
                                         isSelected
                                           ? "border-[#8c52ff]/45 bg-[#8c52ff]/14 text-white"
                                           : "border-white/10 bg-white/[0.03] text-white/72 hover:bg-white/[0.05] hover:text-white"
@@ -1992,19 +1992,19 @@ export function ProductEditor({
                                       type="button"
                                       onClick={() => void copyOfferCheckoutLink(index)}
                                       disabled={!checkoutUrl}
-                                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <Copy className="h-4 w-4" />
-                                      Copiar link
+                                      Copiar
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => openOfferCheckout(index)}
                                       disabled={!checkoutUrl}
-                                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <ExternalLink className="h-4 w-4" />
-                                      Visualizar checkout
+                                      Ver checkout
                                     </button>
                                   </div>
                                 </div>
