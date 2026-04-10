@@ -2192,13 +2192,13 @@ export function ProductEditor({
 
           <div className="platform-surface rounded-[28px] px-5 py-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-h-[20px]">
-                {error ? <p className="text-sm text-[#ff9db1]">{error}</p> : null}
-                {successMessage ? <p className="text-sm text-[#7ee7ba]">{successMessage}</p> : null}
-                {!error && !successMessage ? <p className="text-sm text-white/38">Salve quando terminar de ajustar a area selecionada.</p> : null}
-              </div>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+                <div className="min-h-[20px]">
+                  {error ? <p className="text-sm text-[#ff9db1]">{error}</p> : null}
+                  {successMessage ? <p className="text-sm text-[#7ee7ba]">{successMessage}</p> : null}
+                  {!error && !successMessage ? <p className="text-sm text-white/38">Salve quando terminar de ajustar a area selecionada.</p> : null}
+                </div>
 
-              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -2212,6 +2212,9 @@ export function ProductEditor({
                   <Trash2 className="h-4 w-4" />
                   Excluir produto
                 </button>
+              </div>
+
+              <div className="flex flex-wrap gap-3 lg:justify-end">
                 <button
                   type="button"
                   onClick={onClose}
