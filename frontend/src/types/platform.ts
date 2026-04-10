@@ -93,6 +93,27 @@ export interface PlatformProductMutationResponse {
   item: PlatformProductItem;
 }
 
+export interface PlatformCheckoutItem {
+  productId: string;
+  offerId: string;
+  sellerName: string;
+  sellerEmail: string;
+  sellerAvatarUrl: string | null;
+  productName: string;
+  productDescription: string;
+  productImageUrl: string | null;
+  supportEmail: string;
+  supportPhone: string;
+  invoiceStatementDescriptor: string;
+  refundWindow: PlatformProductRefundWindow;
+  offer: PlatformProductOffer;
+  coupons: PlatformProductCoupon[];
+}
+
+export interface PlatformCheckoutResponse {
+  item: PlatformCheckoutItem;
+}
+
 export interface PlatformProductDeleteResponse {
   message: string;
   productId: string;

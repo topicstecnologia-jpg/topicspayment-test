@@ -19,6 +19,7 @@ import {
 import {
   createPlatformProductItem,
   deletePlatformProductItem,
+  getPlatformCheckout,
   getPlatformDashboard,
   getPlatformProducts,
   getPlatformSales,
@@ -104,6 +105,7 @@ apiRouter.delete(
   deleteAccount
 );
 apiRouter.get("/admin/overview", disableSensitiveCaching, requireAuth, authorizeRoles("admin"), getAdminOverview);
+apiRouter.get("/platform/checkout/:productId", disableSensitiveCaching, getPlatformCheckout);
 apiRouter.get("/platform/dashboard", disableSensitiveCaching, requireAuth, getPlatformDashboard);
 apiRouter.get("/platform/products", disableSensitiveCaching, requireAuth, getPlatformProducts);
 apiRouter.post(

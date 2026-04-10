@@ -15,6 +15,7 @@ import type {
   VerificationCodeResponse
 } from "@/types/auth";
 import type {
+  PlatformCheckoutResponse,
   PlatformDashboardResponse,
   PlatformProductDeleteResponse,
   PlatformProductMutationResponse,
@@ -201,6 +202,12 @@ export const authApi = {
 
   getPlatformProducts() {
     return apiRequest<PlatformProductsResponse>("/platform/products");
+  },
+
+  getPlatformCheckout(productId: string, offerId?: string) {
+    const search = offerId ? `?offer=${encodeURIComponent(offerId)}` : "";
+
+    return apiRequest<PlatformCheckoutResponse>(`/platform/checkout/${productId}${search}`);
   },
 
   createPlatformProduct(values: ProductFormInput) {

@@ -1,6 +1,7 @@
 import {
   createPlatformProduct,
   deletePlatformProduct,
+  getCheckoutPayload,
   getDashboardPayload,
   getProductsPayload,
   getSalesPayload,
@@ -20,6 +21,13 @@ export const getPlatformDashboard = asyncHandler(async (request, response) => {
 
 export const getPlatformProducts = asyncHandler(async (request, response) => {
   response.json(await getProductsPayload(request.user!.id));
+});
+
+export const getPlatformCheckout = asyncHandler(async (request, response) => {
+  const productId = request.params.productId;
+  const offerId = typeof request.query.offer === "string" ? request.query.offer : undefined;
+
+  response.json(await getCheckoutPayload(productId, offerId));
 });
 
 export const createPlatformProductItem = asyncHandler(async (request, response) => {

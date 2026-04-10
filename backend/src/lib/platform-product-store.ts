@@ -78,6 +78,23 @@ export interface PlatformProductRecord {
   updatedAt: string;
 }
 
+export interface PlatformCheckoutRecord {
+  productId: string;
+  offerId: string;
+  sellerName: string;
+  sellerEmail: string;
+  sellerAvatarUrl: string | null;
+  productName: string;
+  productDescription: string;
+  productImageUrl: string | null;
+  supportEmail: string;
+  supportPhone: string;
+  invoiceStatementDescriptor: string;
+  refundWindow: PlatformProductRefundWindow;
+  offer: PlatformProductOfferRecord;
+  coupons: PlatformProductCouponRecord[];
+}
+
 export interface DeletedPlatformProductRecord {
   id: string;
   name: string;
@@ -439,4 +456,53 @@ export async function deletePlatformProductRecord(
     id: current.id,
     name: current.name
   };
+}
+
+export async function getPlatformCheckoutRecord(productId: string, offerId?: string) {
+  const item = await prisma.platformProduct.findFirst({
+    where: {
+      id: productId
+    },
+    include: {
+      owner: {
+        select: {
+          name: true,
+          email: true,
+          avatarUrl: true
+        }
+      }
+    }
+  });
+
+  if (!item) {
+    throw new AppError("Checkout indisponivel.", 404);
+  }
+
+  const offers = parseOffers(item.id, item.offers);
+  const activeOffers = offers.filter((offer) => offer.active);
+  const offer =
+    (offerId ? activeOffers.find((entry) => entry.id === offerId) : null) ??
+    activeOffers.find((entry) => entry.isPrimary) ??
+    activeOffers[0];
+
+  if (!offer) {
+    throw new AppError("Oferta indisponivel.", 404);
+  }
+
+  return {
+    productId: item.id,
+    offerId: offer.id,
+    sellerName: item.owner.name,
+    sellerEmail: item.owner.email,
+    sellerAvatarUrl: item.owner.avatarUrl,
+    productName: item.name,
+    productDescription: item.description,
+    productImageUrl: item.imageUrl,
+    supportEmail: item.supportEmail || item.owner.email,
+    supportPhone: item.supportPhone,
+    invoiceStatementDescriptor: item.invoiceStatementDescriptor,
+    refundWindow: normalizeRefundWindow(item.refundWindow),
+    offer,
+    coupons: parseCoupons(item.id, item.coupons).filter((coupon) => coupon.active)
+  } satisfies PlatformCheckoutRecord;
 }

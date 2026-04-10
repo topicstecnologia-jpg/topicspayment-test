@@ -2,6 +2,7 @@ import { countUsers } from "../lib/app-repository";
 import {
   createPlatformProductRecord,
   deletePlatformProductRecord,
+  getPlatformCheckoutRecord,
   listPlatformProductRecords,
   setPlatformProductActiveState,
   updatePlatformProductRecord,
@@ -275,6 +276,14 @@ export async function updatePlatformProductActiveState(
 
 export async function deletePlatformProduct(userId: string, productId: string) {
   return deletePlatformProductRecord(userId, productId);
+}
+
+export async function getCheckoutPayload(productId: string, offerId?: string) {
+  const checkout = await getPlatformCheckoutRecord(productId, offerId);
+
+  return {
+    item: checkout
+  };
 }
 
 export async function getSalesPayload(user: SafeUser) {

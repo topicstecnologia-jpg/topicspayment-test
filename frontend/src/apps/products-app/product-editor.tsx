@@ -140,18 +140,14 @@ function buildOfferCode(productId: string, offerId: string, index: number) {
     .slice(-8);
 }
 
-function buildOfferCheckoutUrl(salesPageUrl: string | null, offerId: string) {
-  if (!salesPageUrl) {
-    return null;
+function buildOfferCheckoutUrl(productId: string, offerId: string) {
+  const pathname = `/checkout/${encodeURIComponent(productId)}?offer=${encodeURIComponent(offerId)}`;
+
+  if (typeof window === "undefined") {
+    return pathname;
   }
 
-  try {
-    const url = new URL(salesPageUrl);
-    url.searchParams.set("offer", offerId);
-    return url.toString();
-  } catch {
-    return null;
-  }
+  return new URL(pathname, window.location.origin).toString();
 }
 
 function buildProductTrend(product: PlatformProductItem) {
@@ -694,7 +690,8 @@ export function ProductEditor({
       ? buildOfferCode(product.id, selectedOfferId, selectedOfferIndex)
       : null;
   const selectedOfferCheckoutUrl =
-    selectedOfferId ? buildOfferCheckoutUrl(previewProduct.salesPageUrl, selectedOfferId) : null;
+    selectedOfferId ? buildOfferCheckoutUrl(product.id, selectedOfferId) : null;
+  const selectedOfferCheckoutActive = Boolean(selectedOffer?.active);
   const selectedOfferPreview = selectedOffer?.imageUrl || coverPreview;
   const isCreatingNewOffer =
     selectedOfferIndex != null && creatingOfferIndex === selectedOfferIndex;
@@ -822,10 +819,10 @@ export function ProductEditor({
 
     const offer = offersValues[index];
     const offerId = offer?.id || `${product.id}-offer-${index + 1}`;
-    const checkoutUrl = buildOfferCheckoutUrl(previewProduct.salesPageUrl, offerId);
+    const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
 
-    if (!checkoutUrl) {
-      setOffersFeedback("Preencha a URL da página de vendas para liberar o link do checkout.");
+    if (!offer?.active) {
+      setOffersFeedback("Ative a oferta para compartilhar o checkout.");
       return;
     }
 
@@ -844,10 +841,10 @@ export function ProductEditor({
 
     const offer = offersValues[index];
     const offerId = offer?.id || `${product.id}-offer-${index + 1}`;
-    const checkoutUrl = buildOfferCheckoutUrl(previewProduct.salesPageUrl, offerId);
+    const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
 
-    if (!checkoutUrl) {
-      setOffersFeedback("Preencha a URL da página de vendas para visualizar o checkout.");
+    if (!offer?.active) {
+      setOffersFeedback("Ative a oferta para visualizar o checkout.");
       return;
     }
 
@@ -1156,8 +1153,9 @@ export function ProductEditor({
               <div className="space-y-1.5">
                 <label className={fieldLabelClass}>Link do checkout</label>
                 <div className="flex min-h-[48px] items-center rounded-[18px] border border-white/10 bg-white/[0.03] px-4 text-sm text-white/60">
-                  {selectedOfferCheckoutUrl ??
-                    "Preencha a URL da página de vendas do produto para gerar o link desta oferta."}
+                  {selectedOfferCheckoutActive
+                    ? selectedOfferCheckoutUrl
+                    : "Ative a oferta para compartilhar este checkout."}
                 </div>
               </div>
 
@@ -1904,7 +1902,8 @@ export function ProductEditor({
                             const isSelected = selectedOfferIndex === index;
                             const isPrimary = currentOffer?.isPrimary;
                             const isOfferActive = currentOffer?.active ?? true;
-                            const checkoutUrl = buildOfferCheckoutUrl(previewProduct.salesPageUrl, offerId);
+                            const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
+                            const isCheckoutEnabled = Boolean(isOfferActive);
 
                             return (
                               <article
@@ -1992,7 +1991,7 @@ export function ProductEditor({
                                     <button
                                       type="button"
                                       onClick={() => void copyOfferCheckoutLink(index)}
-                                      disabled={!checkoutUrl}
+                                      disabled={!checkoutUrl || !isCheckoutEnabled}
                                       className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <Copy className="h-4 w-4" />
@@ -2001,7 +2000,7 @@ export function ProductEditor({
                                     <button
                                       type="button"
                                       onClick={() => openOfferCheckout(index)}
-                                      disabled={!checkoutUrl}
+                                      disabled={!checkoutUrl || !isCheckoutEnabled}
                                       className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/72 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                       <ExternalLink className="h-4 w-4" />
