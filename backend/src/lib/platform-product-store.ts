@@ -77,6 +77,11 @@ export interface PlatformProductRecord {
   updatedAt: string;
 }
 
+export interface DeletedPlatformProductRecord {
+  id: string;
+  name: string;
+}
+
 type PlatformProductRecordRow = Awaited<
   ReturnType<typeof prisma.platformProduct.findFirstOrThrow>
 >;
@@ -413,4 +418,20 @@ export async function setPlatformProductActiveState(
   });
 
   return mapPlatformProductRecord(next);
+}
+
+export async function deletePlatformProductRecord(
+  ownerId: string,
+  productId: string
+): Promise<DeletedPlatformProductRecord> {
+  const current = await getScopedPlatformProduct(ownerId, productId);
+
+  await prisma.platformProduct.delete({
+    where: { id: current.id }
+  });
+
+  return {
+    id: current.id,
+    name: current.name
+  };
 }

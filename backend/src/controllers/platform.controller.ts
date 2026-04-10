@@ -1,5 +1,6 @@
 import {
   createPlatformProduct,
+  deletePlatformProduct,
   getDashboardPayload,
   getProductsPayload,
   getSalesPayload,
@@ -50,6 +51,16 @@ export const setPlatformProductItemActiveState = asyncHandler(async (request, re
   response.json({
     message: payload.isActive ? "Produto ativado com sucesso." : "Produto desativado com sucesso.",
     item
+  });
+});
+
+export const deletePlatformProductItem = asyncHandler(async (request, response) => {
+  const productId = request.params.productId;
+  const item = await deletePlatformProduct(request.user!.id, productId);
+
+  response.json({
+    message: "Produto excluido com sucesso.",
+    productId: item.id
   });
 });
 

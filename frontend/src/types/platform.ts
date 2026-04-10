@@ -92,6 +92,11 @@ export interface PlatformProductMutationResponse {
   item: PlatformProductItem;
 }
 
+export interface PlatformProductDeleteResponse {
+  message: string;
+  productId: string;
+}
+
 export interface PlatformAdminOverview {
   totalUsers: number;
   admins: number;

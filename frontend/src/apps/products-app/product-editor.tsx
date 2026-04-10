@@ -21,7 +21,8 @@ import {
   Plus,
   Sparkles,
   Tag,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react";
 
 import { productEditorSchema, type ProductEditorInput } from "@/schemas/product";
@@ -343,9 +344,11 @@ interface ProductEditorProps {
   product: PlatformProductItem | null;
   isOpen: boolean;
   isSubmitting: boolean;
+  isDeleting: boolean;
   error: string | null;
   successMessage: string | null;
   onClose: () => void;
+  onDelete: () => Promise<boolean>;
   onSubmit: (values: ProductEditorInput) => Promise<void>;
 }
 
@@ -353,9 +356,11 @@ export function ProductEditor({
   product,
   isOpen,
   isSubmitting,
+  isDeleting,
   error,
   successMessage,
   onClose,
+  onDelete,
   onSubmit
 }: ProductEditorProps) {
   const [activeSection, setActiveSection] = useState<ProductEditorSection>("dashboard");
@@ -364,6 +369,9 @@ export function ProductEditor({
   const [selectedOfferIndex, setSelectedOfferIndex] = useState<number | null>(null);
   const [creatingOfferIndex, setCreatingOfferIndex] = useState<number | null>(null);
   const [offersFeedback, setOffersFeedback] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteConfirmationValue, setDeleteConfirmationValue] = useState("");
+  const [deleteValidationError, setDeleteValidationError] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const offerImageInputRef = useRef<HTMLInputElement | null>(null);
   const form = useForm<ProductEditorInput>({
@@ -396,6 +404,9 @@ export function ProductEditor({
     setSelectedOfferIndex((product.offers?.length ?? 0) > 0 ? 0 : null);
     setCreatingOfferIndex(null);
     setOffersFeedback(null);
+    setIsDeleteOpen(false);
+    setDeleteConfirmationValue("");
+    setDeleteValidationError(null);
   }, [isOpen, product, reset]);
 
   useEffect(() => {
@@ -576,6 +587,33 @@ export function ProductEditor({
   const selectedOfferDescriptionLength = selectedOffer?.description?.length ?? 0;
   const isCreatingNewOffer =
     selectedOfferIndex != null && creatingOfferIndex === selectedOfferIndex;
+  const isBusy = isSubmitting || isDeleting;
+  const expectedDeleteConfirmation = previewProduct.name.trim();
+  const deleteConfirmationMatches = deleteConfirmationValue.trim() === expectedDeleteConfirmation;
+
+  function closeDeleteDialog() {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleteOpen(false);
+    setDeleteConfirmationValue("");
+    setDeleteValidationError(null);
+  }
+
+  async function handleDeleteConfirmation() {
+    if (!deleteConfirmationMatches) {
+      setDeleteValidationError("Digite exatamente o nome do produto para confirmar a exclusao.");
+      return;
+    }
+
+    setDeleteValidationError(null);
+    const deleted = await onDelete();
+
+    if (deleted) {
+      closeDeleteDialog();
+    }
+  }
 
   function openOfferEditor(index: number, mode: "existing" | "new" = "existing") {
     setSelectedOfferIndex(index);
@@ -2161,10 +2199,32 @@ export function ProductEditor({
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={onClose} className="inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2.5 text-sm font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteValidationError(null);
+                    setDeleteConfirmationValue("");
+                    setIsDeleteOpen(true);
+                  }}
+                  disabled={isBusy}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#ff5f7a]/30 bg-[#ff5f7a]/10 px-4 py-2.5 text-sm font-medium text-[#ffb5c0] transition hover:bg-[#ff5f7a]/16 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir produto
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isBusy}
+                  className="inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2.5 text-sm font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   Fechar editor
                 </button>
-                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)] px-5 py-2.5 text-sm font-semibold text-[#171a24] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60">
+                <button
+                  type="submit"
+                  disabled={isBusy}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#8c52ff_0%,#c4a6ff_58%,#ffffff_100%)] px-5 py-2.5 text-sm font-semibold text-[#171a24] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   <Sparkles className="h-4 w-4" />
                   {isSubmitting ? "Salvando..." : "Salvar produto"}
                 </button>
@@ -2173,6 +2233,88 @@ export function ProductEditor({
           </div>
         </form>
       </div>
+
+      {isDeleteOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(5,8,14,0.78)] px-4 py-5 backdrop-blur-sm">
+          <div className="w-full max-w-[560px] rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,30,0.99),rgba(10,13,18,0.99))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.4)] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[0.82rem] font-semibold tracking-[-0.02em] text-white/40">
+                  Acao permanente
+                </p>
+                <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
+                  Excluir produto
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                disabled={isDeleting}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-white/[0.04] text-white/58 transition hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-[22px] border border-[#ef476f]/28 bg-[linear-gradient(180deg,rgba(239,71,111,0.14),rgba(239,71,111,0.04))] p-4">
+              <p className="text-base font-semibold text-white">{previewProduct.name}</p>
+              <p className="mt-2 text-sm leading-6 text-white/56">
+                Para evitar enganos, digite exatamente o nome do produto antes de confirmar. Essa exclusao nao pode ser desfeita.
+              </p>
+            </div>
+
+            <div className="mt-5 space-y-1.5">
+              <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/52">
+                Nome do produto para confirmacao
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmationValue}
+                onChange={(event) => {
+                  setDeleteConfirmationValue(event.target.value);
+                  if (deleteValidationError) {
+                    setDeleteValidationError(null);
+                  }
+                }}
+                disabled={isDeleting}
+                placeholder={previewProduct.name}
+                className={cn(
+                  "h-12 w-full rounded-[18px] border bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10 disabled:cursor-not-allowed disabled:opacity-60",
+                  deleteValidationError ? "border-[#ff9db1]/70" : "border-white/10"
+                )}
+              />
+              <p className="text-[12px] text-white/40">
+                Digite: <span className="font-semibold text-white/74">{expectedDeleteConfirmation}</span>
+              </p>
+              {deleteValidationError ? (
+                <p className="text-xs text-[#ff9db1]">{deleteValidationError}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                disabled={isDeleting}
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-transparent px-4 py-2.5 text-sm font-medium text-white/68 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteConfirmation()}
+                disabled={!deleteConfirmationMatches || isDeleting}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? "Excluindo..." : "Confirmar exclusao"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

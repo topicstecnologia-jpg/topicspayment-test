@@ -16,6 +16,7 @@ import type {
 } from "@/types/auth";
 import type {
   PlatformDashboardResponse,
+  PlatformProductDeleteResponse,
   PlatformProductMutationResponse,
   PlatformProductsResponse,
   PlatformSalesResponse
@@ -213,6 +214,12 @@ export const authApi = {
     return apiRequest<PlatformProductMutationResponse>(`/platform/products/${productId}`, {
       method: "PATCH",
       body: JSON.stringify(values)
+    });
+  },
+
+  deletePlatformProduct(productId: string) {
+    return apiRequest<PlatformProductDeleteResponse>(`/platform/products/${productId}`, {
+      method: "DELETE"
     });
   },
 

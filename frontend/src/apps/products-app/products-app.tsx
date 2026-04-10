@@ -52,6 +52,7 @@ export function ProductsApp() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<PlatformProductItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
 
   async function loadProducts(options?: { force?: boolean; silent?: boolean }) {
@@ -139,6 +140,29 @@ export function ProductsApp() {
       const nextItems = exists
         ? current.items.map((item) => (item.id === nextProduct.id ? nextProduct : item))
         : [nextProduct, ...current.items];
+      const nextState = {
+        ...current,
+        items: nextItems,
+        metrics: recalculateMetrics(nextItems, current.metrics)
+      };
+
+      platformDataCache.products.set(nextState);
+      return nextState;
+    });
+  }
+
+  function removeProductFromState(productId: string) {
+    setData((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const nextItems = current.items.filter((item) => item.id !== productId);
+
+      if (nextItems.length === current.items.length) {
+        return current;
+      }
+
       const nextState = {
         ...current,
         items: nextItems,
@@ -280,6 +304,45 @@ export function ProductsApp() {
     }
   }
 
+  async function handleDeleteProduct() {
+    if (!editingProduct) {
+      return false;
+    }
+
+    const productToDelete = editingProduct;
+    setEditorError(null);
+    setEditorSuccessMessage(null);
+    setIsDeleting(true);
+
+    try {
+      await authApi.deletePlatformProduct(productToDelete.id);
+
+      startTransition(() => {
+        removeProductFromState(productToDelete.id);
+        closeEditor();
+      });
+
+      notify({
+        tone: "success",
+        title: "Produto excluido",
+        description: `${productToDelete.name} foi removido com sucesso.`
+      });
+      return true;
+    } catch (deleteError) {
+      const message = getErrorMessage(deleteError, "Nao foi possivel excluir o produto.");
+
+      setEditorError(message);
+      notify({
+        tone: "error",
+        title: "Falha ao excluir produto",
+        description: message
+      });
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (loading && !data) {
     return (
       <div className="platform-surface rounded-[28px] px-4 py-6 text-sm text-white/56">
@@ -325,9 +388,11 @@ export function ProductsApp() {
           product={editingProduct}
           isOpen={isEditing}
           isSubmitting={isSaving}
+          isDeleting={isDeleting}
           error={editorError}
           successMessage={editorSuccessMessage}
           onClose={closeEditor}
+          onDelete={handleDeleteProduct}
           onSubmit={handleSubmitProductEditor}
         />
       ) : isCreateDialogOpen ? (

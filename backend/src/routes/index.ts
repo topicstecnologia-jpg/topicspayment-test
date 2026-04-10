@@ -18,6 +18,7 @@ import {
 } from "../controllers/profile.controller";
 import {
   createPlatformProductItem,
+  deletePlatformProductItem,
   getPlatformDashboard,
   getPlatformProducts,
   getPlatformSales,
@@ -118,6 +119,12 @@ apiRouter.patch(
   requireAuth,
   validateBody(updatePlatformProductSchema),
   updatePlatformProductItem
+);
+apiRouter.delete(
+  "/platform/products/:productId",
+  disableSensitiveCaching,
+  requireAuth,
+  deletePlatformProductItem
 );
 apiRouter.patch(
   "/platform/products/:productId/active-state",

@@ -1,6 +1,7 @@
 import { countUsers } from "../lib/app-repository";
 import {
   createPlatformProductRecord,
+  deletePlatformProductRecord,
   listPlatformProductRecords,
   setPlatformProductActiveState,
   updatePlatformProductRecord,
@@ -270,6 +271,10 @@ export async function updatePlatformProductActiveState(
   isActive: boolean
 ) {
   return setPlatformProductActiveState(userId, productId, isActive);
+}
+
+export async function deletePlatformProduct(userId: string, productId: string) {
+  return deletePlatformProductRecord(userId, productId);
 }
 
 export async function getSalesPayload(user: SafeUser) {
