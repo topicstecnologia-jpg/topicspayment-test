@@ -231,7 +231,7 @@ function PlatformSelect<T extends string>({
   }, [isOpen]);
 
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", isOpen && "relative z-30")}>
       <label className="text-sm font-medium text-white/78">{label}</label>
       <div ref={containerRef} className="relative">
         <button
@@ -912,7 +912,7 @@ export function ProductEditor({
 
         {offersFeedback ? <p className="text-sm text-white/58">{offersFeedback}</p> : null}
 
-        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
           <div className="border-b border-white/8 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Nova oferta</h5>
           </div>
@@ -1119,7 +1119,7 @@ export function ProductEditor({
           </div>
         </section>
 
-        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
           <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Cartão de Crédito</h5>
 
@@ -1241,7 +1241,7 @@ export function ProductEditor({
           </div>
         </section>
 
-        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
           <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Boleto Bancário</h5>
 
@@ -1306,7 +1306,7 @@ export function ProductEditor({
           </div>
         </section>
 
-        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
           <div className="flex items-center justify-between gap-4 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Pix Manual</h5>
 
@@ -1322,7 +1322,7 @@ export function ProductEditor({
           </div>
         </section>
 
-        <section className="platform-surface overflow-hidden rounded-[30px] p-0">
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
           <div className="flex items-center justify-between gap-4 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">
               Descontos por Método de Pagamento
