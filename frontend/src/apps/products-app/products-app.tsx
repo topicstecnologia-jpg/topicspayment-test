@@ -324,12 +324,12 @@ export function ProductsApp() {
 
       notify({
         tone: "success",
-        title: "Produto excluido",
+        title: "Produto excluído",
         description: `${productToDelete.name} foi removido com sucesso.`
       });
       return true;
     } catch (deleteError) {
-      const message = getErrorMessage(deleteError, "Nao foi possivel excluir o produto.");
+      const message = getErrorMessage(deleteError, "Não foi possível excluir o produto.");
 
       setEditorError(message);
       notify({

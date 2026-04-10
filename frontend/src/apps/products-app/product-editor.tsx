@@ -603,7 +603,7 @@ export function ProductEditor({
 
   async function handleDeleteConfirmation() {
     if (!deleteConfirmationMatches) {
-      setDeleteValidationError("Digite exatamente o nome do produto para confirmar a exclusao.");
+      setDeleteValidationError("Digite exatamente o nome do produto para confirmar a exclusão.");
       return;
     }
 
@@ -2242,10 +2242,7 @@ export function ProductEditor({
           <div className="w-full max-w-[560px] rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,30,0.99),rgba(10,13,18,0.99))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.4)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[0.82rem] font-semibold tracking-[-0.02em] text-white/40">
-                  Acao permanente
-                </p>
-                <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
+                <h3 className="text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
                   Excluir produto
                 </h3>
               </div>
@@ -2261,17 +2258,7 @@ export function ProductEditor({
               </button>
             </div>
 
-            <div className="mt-5 rounded-[22px] border border-[#ef476f]/28 bg-[linear-gradient(180deg,rgba(239,71,111,0.14),rgba(239,71,111,0.04))] p-4">
-              <p className="text-base font-semibold text-white">{previewProduct.name}</p>
-              <p className="mt-2 text-sm leading-6 text-white/56">
-                Para evitar enganos, digite exatamente o nome do produto antes de confirmar. Essa exclusao nao pode ser desfeita.
-              </p>
-            </div>
-
             <div className="mt-5 space-y-1.5">
-              <label className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/52">
-                Nome do produto para confirmacao
-              </label>
               <input
                 type="text"
                 value={deleteConfirmationValue}
@@ -2282,7 +2269,7 @@ export function ProductEditor({
                   }
                 }}
                 disabled={isDeleting}
-                placeholder={previewProduct.name}
+                placeholder={`Digite "${previewProduct.name}"`}
                 className={cn(
                   "h-12 w-full rounded-[18px] border bg-white/[0.04] px-4 text-white outline-none transition placeholder:text-white/24 focus:border-[#8c52ff]/65 focus:ring-4 focus:ring-[#8c52ff]/10 disabled:cursor-not-allowed disabled:opacity-60",
                   deleteValidationError ? "border-[#ff9db1]/70" : "border-white/10"
@@ -2312,7 +2299,7 @@ export function ProductEditor({
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#ef476f_0%,#ff8ea4_100%)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 className="h-4 w-4" />
-                {isDeleting ? "Excluindo..." : "Confirmar exclusao"}
+                {isDeleting ? "Excluindo..." : "Confirmar exclusão"}
               </button>
             </div>
           </div>

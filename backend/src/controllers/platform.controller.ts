@@ -59,7 +59,7 @@ export const deletePlatformProductItem = asyncHandler(async (request, response) 
   const item = await deletePlatformProduct(request.user!.id, productId);
 
   response.json({
-    message: "Produto excluido com sucesso.",
+    message: "Produto excluído com sucesso.",
     productId: item.id
   });
 });
