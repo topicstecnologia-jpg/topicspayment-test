@@ -1887,7 +1887,7 @@ export function ProductEditor({
                       <div className="space-y-5">
                         <div className="hidden xl:grid xl:grid-cols-[112px_minmax(0,1fr)_110px_110px_120px_112px_72px_264px] xl:items-center xl:gap-x-3 xl:px-4">
                           {["Código", "Nome", "Preço", "Quantidade de itens", "Atualizado em", "Status", "Ativo?", "Ações"].map((label) => (
-                            <p key={label} className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28">
+                            <p key={label} className="text-[0.98rem] font-semibold tracking-[-0.05em] text-white/72">
                               {label}
                             </p>
                           ))}
