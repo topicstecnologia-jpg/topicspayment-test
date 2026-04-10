@@ -291,6 +291,49 @@ function PlatformSelect<T extends string>({
   );
 }
 
+interface PlatformToggleProps {
+  pressed: boolean;
+  onPressedChange: () => void;
+  disabled?: boolean;
+  label?: string;
+  labelClassName?: string;
+  className?: string;
+}
+
+function PlatformToggle({
+  pressed,
+  onPressedChange,
+  disabled = false,
+  label,
+  labelClassName,
+  className
+}: PlatformToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={onPressedChange}
+      disabled={disabled}
+      className={cn("inline-flex items-center", label && "gap-3", disabled && "cursor-not-allowed", className)}
+      aria-pressed={pressed}
+    >
+      <span
+        className={cn(
+          "relative inline-flex h-8 w-14 rounded-full border transition",
+          pressed ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]" : "border-white/10 bg-white/[0.08]"
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-1 h-6 w-6 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
+            pressed ? "left-[30px]" : "left-1"
+          )}
+        />
+      </span>
+      {label ? <span className={cn("text-sm font-semibold text-white", labelClassName)}>{label}</span> : null}
+    </button>
+  );
+}
+
 function buildEmptyOffer(isPrimary: boolean): ProductEditorOffer {
   return {
     title: "",
@@ -964,96 +1007,42 @@ export function ProductEditor({
             <div className="space-y-4 border-t border-white/8 pt-5">
               <div className="flex items-center justify-between gap-4">
                 <span className={fieldLabelClass}>Ativar oferta?</span>
-                <button
-                  type="button"
-                  onClick={() =>
+                <PlatformToggle
+                  pressed={selectedOffer.active}
+                  onPressedChange={() =>
                     setValue(`offers.${selectedOfferIndex}.active`, !selectedOffer.active, {
                       shouldDirty: true,
                       shouldValidate: true
                     })
                   }
-                  className="inline-flex items-center"
-                  aria-pressed={selectedOffer.active}
-                >
-                  <span
-                    className={cn(
-                      "relative inline-flex h-7 w-12 rounded-full border transition",
-                      selectedOffer.active
-                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                        : "border-white/10 bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                        selectedOffer.active ? "left-[25px]" : "left-0.5"
-                      )}
-                    />
-                  </span>
-                </button>
+                />
               </div>
 
               <div className="flex items-center justify-between gap-4">
                 <span className={fieldLabelClass}>Oferta grátis</span>
-                <button
-                  type="button"
-                  onClick={() =>
+                <PlatformToggle
+                  pressed={selectedOffer.isFree}
+                  onPressedChange={() =>
                     setValue(`offers.${selectedOfferIndex}.isFree`, !selectedOffer.isFree, {
                       shouldDirty: true,
                       shouldValidate: true
                     })
                   }
-                  className="inline-flex items-center"
-                  aria-pressed={selectedOffer.isFree}
-                >
-                  <span
-                    className={cn(
-                      "relative inline-flex h-7 w-12 rounded-full border transition",
-                      selectedOffer.isFree
-                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                        : "border-white/10 bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                        selectedOffer.isFree ? "left-[25px]" : "left-0.5"
-                      )}
-                    />
-                  </span>
-                </button>
+                />
               </div>
 
               <div className="flex items-center justify-between gap-4">
                 <span className={fieldLabelClass}>Repassar taxa fixa para o comprador</span>
-                <button
-                  type="button"
-                  onClick={() =>
+                <PlatformToggle
+                  pressed={selectedOffer.passFixedFeeToBuyer}
+                  onPressedChange={() =>
                     setValue(
                       `offers.${selectedOfferIndex}.passFixedFeeToBuyer`,
                       !selectedOffer.passFixedFeeToBuyer,
                       { shouldDirty: true, shouldValidate: true }
                     )
                   }
-                  className="inline-flex items-center"
-                  aria-pressed={selectedOffer.passFixedFeeToBuyer}
-                >
-                  <span
-                    className={cn(
-                      "relative inline-flex h-7 w-12 rounded-full border transition",
-                      selectedOffer.passFixedFeeToBuyer
-                        ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                        : "border-white/10 bg-white/[0.08]"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                        selectedOffer.passFixedFeeToBuyer ? "left-[25px]" : "left-0.5"
-                      )}
-                    />
-                  </span>
-                </button>
+                />
               </div>
             </div>
 
@@ -1134,33 +1123,15 @@ export function ProductEditor({
           <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Cartão de Crédito</h5>
 
-            <button
-              type="button"
-              onClick={() =>
+            <PlatformToggle
+              pressed={selectedOffer.cardEnabled}
+              onPressedChange={() =>
                 setValue(`offers.${selectedOfferIndex}.cardEnabled`, !selectedOffer.cardEnabled, {
                   shouldDirty: true,
                   shouldValidate: true
                 })
               }
-              className="inline-flex items-center"
-              aria-pressed={selectedOffer.cardEnabled}
-            >
-              <span
-                className={cn(
-                  "relative inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.cardEnabled
-                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                    : "border-white/10 bg-white/[0.08]"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.cardEnabled ? "left-[25px]" : "left-0.5"
-                  )}
-                />
-              </span>
-            </button>
+            />
           </div>
 
           <div className={cn("space-y-4 px-5 py-5 lg:px-6 lg:py-6", !selectedOffer.cardEnabled && "opacity-45")}>
@@ -1208,35 +1179,17 @@ export function ProductEditor({
 
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3.5">
               <span className={fieldLabelClass}>Permitir parcelamento inteligente?</span>
-              <button
-                type="button"
+              <PlatformToggle
+                pressed={selectedOffer.cardSmartInstallments}
                 disabled={!selectedOffer.cardEnabled}
-                onClick={() =>
+                onPressedChange={() =>
                   setValue(
                     `offers.${selectedOfferIndex}.cardSmartInstallments`,
                     !selectedOffer.cardSmartInstallments,
                     { shouldDirty: true, shouldValidate: true }
                   )
                 }
-                className="inline-flex items-center disabled:cursor-not-allowed"
-                aria-pressed={selectedOffer.cardSmartInstallments}
-              >
-                <span
-                  className={cn(
-                    "relative inline-flex h-7 w-12 rounded-full border transition",
-                    selectedOffer.cardSmartInstallments
-                      ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                      : "border-white/10 bg-white/[0.08]"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                      selectedOffer.cardSmartInstallments ? "left-[25px]" : "left-0.5"
-                    )}
-                  />
-                </span>
-              </button>
+              />
             </div>
 
             <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
@@ -1292,33 +1245,15 @@ export function ProductEditor({
           <div className="flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Boleto Bancário</h5>
 
-            <button
-              type="button"
-              onClick={() =>
+            <PlatformToggle
+              pressed={selectedOffer.boletoEnabled}
+              onPressedChange={() =>
                 setValue(`offers.${selectedOfferIndex}.boletoEnabled`, !selectedOffer.boletoEnabled, {
                   shouldDirty: true,
                   shouldValidate: true
                 })
               }
-              className="inline-flex items-center"
-              aria-pressed={selectedOffer.boletoEnabled}
-            >
-              <span
-                className={cn(
-                  "relative inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.boletoEnabled
-                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                    : "border-white/10 bg-white/[0.08]"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.boletoEnabled ? "left-[25px]" : "left-0.5"
-                  )}
-                />
-              </span>
-            </button>
+            />
           </div>
 
           <div className={cn("space-y-4 px-5 py-5 lg:px-6 lg:py-6", !selectedOffer.boletoEnabled && "opacity-45")}>
@@ -1339,34 +1274,16 @@ export function ProductEditor({
 
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3.5">
               <span className={fieldLabelClass}>Habilitar boleto infinito?</span>
-              <button
-                type="button"
+              <PlatformToggle
+                pressed={selectedOffer.boletoInfinite}
                 disabled={!selectedOffer.boletoEnabled}
-                onClick={() =>
+                onPressedChange={() =>
                   setValue(`offers.${selectedOfferIndex}.boletoInfinite`, !selectedOffer.boletoInfinite, {
                     shouldDirty: true,
                     shouldValidate: true
                   })
                 }
-                className="inline-flex items-center disabled:cursor-not-allowed"
-                aria-pressed={selectedOffer.boletoInfinite}
-              >
-                <span
-                  className={cn(
-                    "relative inline-flex h-7 w-12 rounded-full border transition",
-                    selectedOffer.boletoInfinite
-                      ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                      : "border-white/10 bg-white/[0.08]"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                      selectedOffer.boletoInfinite ? "left-[25px]" : "left-0.5"
-                    )}
-                  />
-                </span>
-              </button>
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -1393,33 +1310,15 @@ export function ProductEditor({
           <div className="flex items-center justify-between gap-4 px-5 py-4">
             <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Pix Manual</h5>
 
-            <button
-              type="button"
-              onClick={() =>
+            <PlatformToggle
+              pressed={selectedOffer.pixManualEnabled}
+              onPressedChange={() =>
                 setValue(`offers.${selectedOfferIndex}.pixManualEnabled`, !selectedOffer.pixManualEnabled, {
                   shouldDirty: true,
                   shouldValidate: true
                 })
               }
-              className="inline-flex items-center"
-              aria-pressed={selectedOffer.pixManualEnabled}
-            >
-              <span
-                className={cn(
-                  "relative inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.pixManualEnabled
-                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                    : "border-white/10 bg-white/[0.08]"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.pixManualEnabled ? "left-[25px]" : "left-0.5"
-                  )}
-                />
-              </span>
-            </button>
+            />
           </div>
         </section>
 
@@ -1429,34 +1328,16 @@ export function ProductEditor({
               Descontos por Método de Pagamento
             </h5>
 
-            <button
-              type="button"
-              onClick={() =>
+            <PlatformToggle
+              pressed={selectedOffer.paymentMethodDiscountsEnabled}
+              onPressedChange={() =>
                 setValue(
                   `offers.${selectedOfferIndex}.paymentMethodDiscountsEnabled`,
                   !selectedOffer.paymentMethodDiscountsEnabled,
                   { shouldDirty: true, shouldValidate: true }
                 )
               }
-              className="inline-flex items-center"
-              aria-pressed={selectedOffer.paymentMethodDiscountsEnabled}
-            >
-              <span
-                className={cn(
-                  "relative inline-flex h-7 w-12 rounded-full border transition",
-                  selectedOffer.paymentMethodDiscountsEnabled
-                    ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                    : "border-white/10 bg-white/[0.08]"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                    selectedOffer.paymentMethodDiscountsEnabled ? "left-[25px]" : "left-0.5"
-                  )}
-                />
-              </span>
-            </button>
+            />
           </div>
         </section>
       </div>
@@ -2025,31 +1906,12 @@ export function ProductEditor({
 
                                   <div className="space-y-1">
                                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/28 xl:hidden">Ativo?</p>
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleOfferActive(index)}
-                                      className="inline-flex items-center gap-3"
-                                      aria-pressed={isOfferActive}
-                                    >
-                                      <span
-                                        className={cn(
-                                          "relative inline-flex h-7 w-12 rounded-full border transition",
-                                          isOfferActive
-                                            ? "border-transparent bg-[linear-gradient(90deg,#8c52ff_0%,#c4a6ff_100%)]"
-                                            : "border-white/10 bg-white/[0.08]"
-                                        )}
-                                      >
-                                        <span
-                                          className={cn(
-                                            "absolute top-0.5 h-5.5 w-5.5 rounded-full bg-white shadow-[0_8px_24px_rgba(0,0,0,0.26)] transition",
-                                            isOfferActive ? "left-[25px]" : "left-0.5"
-                                          )}
-                                        />
-                                      </span>
-                                      <span className="text-sm font-medium text-white/72">
-                                        {isOfferActive ? "Ativa" : "Inativa"}
-                                      </span>
-                                    </button>
+                                    <PlatformToggle
+                                      pressed={isOfferActive}
+                                      onPressedChange={() => toggleOfferActive(index)}
+                                      label={isOfferActive ? "Ativa" : "Inativa"}
+                                      labelClassName="text-sm font-medium text-white/72"
+                                    />
                                   </div>
 
                                   <div className="flex flex-wrap gap-2 xl:justify-end">
