@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type ChangeEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   ArrowLeft,
@@ -202,11 +203,21 @@ function PlatformSelect<T extends string>({
 }: PlatformSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuPosition, setMenuPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    maxHeight: 256
+  });
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (!containerRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         setIsOpen(false);
       }
     }
@@ -230,32 +241,54 @@ function PlatformSelect<T extends string>({
     };
   }, [isOpen]);
 
-  return (
-    <div className={cn("space-y-1.5", isOpen && "relative z-30")}>
-      <label className="text-sm font-medium text-white/78">{label}</label>
-      <div ref={containerRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen((current) => !current)}
-          className={cn(
-            "flex h-12 w-full items-center justify-between rounded-[18px] border px-4 text-left text-white outline-none transition",
-            isOpen
-              ? "border-[#8c52ff]/65 bg-[#151926] shadow-[0_0_0_4px_rgba(140,82,255,0.1)]"
-              : "border-white/10 bg-[#121722] hover:border-white/16 hover:bg-[#171d2b]",
-            error ? "border-[#ff9db1]/70" : ""
-          )}
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-        >
-          <span className="truncate text-[0.96rem] text-white">{selectedOption?.label ?? value}</span>
-          <ChevronDown
-            className={cn("h-4 w-4 flex-none text-white/54 transition-transform", isOpen ? "rotate-180" : "")}
-          />
-        </button>
+  useEffect(() => {
+    function updateMenuPosition() {
+      if (!buttonRef.current) {
+        return;
+      }
 
-        {isOpen ? (
-          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,25,35,0.99),rgba(12,15,24,0.99))] p-2 shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-xl">
-            <div className="platform-scrollbar max-h-64 overflow-y-auto pr-1">
+      const rect = buttonRef.current.getBoundingClientRect();
+      const availableBelow = window.innerHeight - rect.bottom - 16;
+      const availableAbove = rect.top - 16;
+      const shouldOpenUpward = availableBelow < 180 && availableAbove > availableBelow;
+      const maxHeight = Math.max(Math.min(shouldOpenUpward ? availableAbove - 8 : availableBelow - 8, 320), 120);
+
+      setMenuPosition({
+        top: shouldOpenUpward ? Math.max(16, rect.top - maxHeight - 8) : rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+        maxHeight
+      });
+    }
+
+    if (!isOpen) {
+      return;
+    }
+
+    updateMenuPosition();
+
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen]);
+
+  const menu =
+    isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={menuRef}
+            className="fixed z-[140] overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,25,35,0.99),rgba(12,15,24,0.99))] p-2 shadow-[0_24px_60px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+            style={{
+              top: menuPosition.top,
+              left: menuPosition.left,
+              width: menuPosition.width
+            }}
+          >
+            <div className="platform-scrollbar overflow-y-auto pr-1" style={{ maxHeight: menuPosition.maxHeight }}>
               {options.map((option) => {
                 const isSelected = option.value === value;
 
@@ -282,11 +315,38 @@ function PlatformSelect<T extends string>({
                 );
               })}
             </div>
-          </div>
-        ) : null}
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-white/78">{label}</label>
+      <div ref={containerRef} className="relative">
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className={cn(
+            "flex h-12 w-full items-center justify-between rounded-[18px] border px-4 text-left text-white outline-none transition",
+            isOpen
+              ? "border-[#8c52ff]/65 bg-[#151926] shadow-[0_0_0_4px_rgba(140,82,255,0.1)]"
+              : "border-white/10 bg-[#121722] hover:border-white/16 hover:bg-[#171d2b]",
+            error ? "border-[#ff9db1]/70" : ""
+          )}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+        >
+          <span className="truncate text-[0.96rem] text-white">{selectedOption?.label ?? value}</span>
+          <ChevronDown
+            className={cn("h-4 w-4 flex-none text-white/54 transition-transform", isOpen ? "rotate-180" : "")}
+          />
+        </button>
       </div>
       {error ? <p className="text-xs text-[#ff9db1]">{error}</p> : null}
       {!error && helperText ? <p className="text-[11px] leading-5 text-white/34">{helperText}</p> : null}
+      {menu}
     </div>
   );
 }
