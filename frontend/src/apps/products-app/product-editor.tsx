@@ -2239,7 +2239,7 @@ export function ProductEditor({
 
       {isDeleteOpen ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(5,8,14,0.78)] px-4 py-5 backdrop-blur-sm">
-          <div className="w-full max-w-[560px] rounded-[30px] border border-white/8 bg-[linear-gradient(180deg,rgba(18,22,30,0.99),rgba(10,13,18,0.99))] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.4)] sm:p-6">
+          <div className="w-full max-w-[560px] text-white sm:px-3">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-[1.45rem] font-semibold tracking-[-0.05em] text-white">
