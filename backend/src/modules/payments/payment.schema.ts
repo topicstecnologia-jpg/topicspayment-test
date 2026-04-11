@@ -34,6 +34,15 @@ export const createCheckoutPaymentSchema = z.discriminatedUnion("paymentMethod",
     })
   }),
   checkoutBaseSchema.extend({
+    paymentMethod: z.literal("debit"),
+    card: z.object({
+      token: z.string().trim().min(1),
+      paymentMethodId: z.string().trim().min(1),
+      issuerId: z.string().trim().min(1).optional(),
+      installments: z.coerce.number().int().min(1).max(24)
+    })
+  }),
+  checkoutBaseSchema.extend({
     paymentMethod: z.literal("pix")
   }),
   checkoutBaseSchema.extend({

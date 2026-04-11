@@ -1,9 +1,12 @@
 import { env } from "../../config/env";
 import { AppError } from "../../utils/app-error";
 import type {
+  MercadoPagoPaymentMethodRecord,
   MercadoPagoPaymentRequest,
   MercadoPagoPaymentResponsePayload
 } from "./payment.types";
+
+let paymentMethodsCachePromise: Promise<MercadoPagoPaymentMethodRecord[]> | null = null;
 
 function getMercadoPagoAccessToken() {
   if (!env.MERCADO_PAGO_ACCESS_TOKEN) {
@@ -59,4 +62,31 @@ export async function createMercadoPagoPayment(
   }
 
   return data as unknown as MercadoPagoPaymentResponsePayload;
+}
+
+export async function listMercadoPagoPaymentMethods() {
+  if (!paymentMethodsCachePromise) {
+    paymentMethodsCachePromise = fetch(buildMercadoPagoUrl("/v1/payment_methods"), {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
+        "Content-Type": "application/json"
+      }
+    })
+      .then(async (response) => {
+        const data = (await response.json()) as Record<string, unknown>;
+
+        if (!response.ok) {
+          throw new AppError(resolveMercadoPagoErrorMessage(data), response.status, data);
+        }
+
+        return data as unknown as MercadoPagoPaymentMethodRecord[];
+      })
+      .catch((error) => {
+        paymentMethodsCachePromise = null;
+        throw error;
+      });
+  }
+
+  return paymentMethodsCachePromise;
 }

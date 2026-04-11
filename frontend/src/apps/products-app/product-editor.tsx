@@ -393,6 +393,7 @@ function buildEmptyOffer(isPrimary: boolean): ProductEditorOffer {
     isFree: false,
     passFixedFeeToBuyer: false,
     cardEnabled: true,
+    debitEnabled: true,
     cardInterestPayer: "buyer",
     cardSmartInstallments: false,
     cardInstallmentLimit: 12,
@@ -425,6 +426,7 @@ function isOfferUntouched(offer: ProductEditorOffer | undefined) {
     offer.isFree === false &&
     offer.passFixedFeeToBuyer === false &&
     offer.cardEnabled === true &&
+    offer.debitEnabled === true &&
     offer.cardInterestPayer === "buyer" &&
     offer.cardSmartInstallments === false &&
     Number(offer.cardInstallmentLimit ?? 12) === 12 &&
@@ -1287,6 +1289,27 @@ export function ProductEditor({
                 </span>
               </button>
             </div>
+          </div>
+        </section>
+
+        <section className="platform-surface overflow-visible rounded-[30px] p-0">
+          <div className="flex items-center justify-between gap-4 px-5 py-4">
+            <div>
+              <h5 className="text-[1.02rem] font-semibold tracking-[-0.04em] text-white">Cartão de Débito</h5>
+              <p className="mt-1 text-sm text-white/56">
+                Processamento à vista com validação específica para cartões de débito do Mercado Pago.
+              </p>
+            </div>
+
+            <PlatformToggle
+              pressed={selectedOffer.debitEnabled}
+              onPressedChange={() =>
+                setValue(`offers.${selectedOfferIndex}.debitEnabled`, !selectedOffer.debitEnabled, {
+                  shouldDirty: true,
+                  shouldValidate: true
+                })
+              }
+            />
           </div>
         </section>
 

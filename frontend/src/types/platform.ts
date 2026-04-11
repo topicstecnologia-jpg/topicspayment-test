@@ -44,6 +44,7 @@ export interface PlatformProductOffer {
   isFree: boolean;
   passFixedFeeToBuyer: boolean;
   cardEnabled: boolean;
+  debitEnabled: boolean;
   cardInterestPayer: PlatformProductOfferCardInterestPayer;
   cardSmartInstallments: boolean;
   cardInstallmentLimit: number;
@@ -115,7 +116,7 @@ export interface PlatformCheckoutResponse {
   item: PlatformCheckoutItem;
 }
 
-export type PlatformCheckoutPaymentMethod = "card" | "pix" | "boleto";
+export type PlatformCheckoutPaymentMethod = "card" | "debit" | "pix" | "boleto";
 export type PlatformCheckoutAudience = "br" | "international";
 
 export interface PlatformCheckoutBuyerInput {
@@ -147,6 +148,13 @@ export type PlatformCheckoutPaymentPayload =
       productId: string;
       offerId: string;
       paymentMethod: "card";
+      customer: PlatformCheckoutBuyerInput;
+      card: PlatformCheckoutCardPaymentInput;
+    }
+  | {
+      productId: string;
+      offerId: string;
+      paymentMethod: "debit";
       customer: PlatformCheckoutBuyerInput;
       card: PlatformCheckoutCardPaymentInput;
     }

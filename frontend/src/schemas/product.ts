@@ -142,6 +142,7 @@ const productOfferSchema = z.object({
   isFree: z.boolean().default(false),
   passFixedFeeToBuyer: z.boolean().default(false),
   cardEnabled: z.boolean().default(true),
+  debitEnabled: z.boolean().default(true),
   cardInterestPayer: z.enum(["buyer", "seller"]).default("buyer"),
   cardSmartInstallments: z.boolean().default(false),
   cardInstallmentLimit: z.coerce.number().int().min(1, "Selecione ao menos 1 parcela.").max(12, "Selecione no máximo 12 parcelas.").default(12),

@@ -31,6 +31,7 @@ export interface PlatformProductOfferRecord {
   isFree: boolean;
   passFixedFeeToBuyer: boolean;
   cardEnabled: boolean;
+  debitEnabled: boolean;
   cardInterestPayer: PlatformProductOfferCardInterestPayer;
   cardSmartInstallments: boolean;
   cardInstallmentLimit: number;
@@ -191,6 +192,7 @@ function normalizeOfferRecord(
     isFree: Boolean(offer.isFree),
     passFixedFeeToBuyer: Boolean(offer.passFixedFeeToBuyer),
     cardEnabled: offer.cardEnabled ?? true,
+    debitEnabled: offer.debitEnabled ?? true,
     cardInterestPayer: offer.cardInterestPayer === "seller" ? "seller" : "buyer",
     cardSmartInstallments: Boolean(offer.cardSmartInstallments),
     cardInstallmentLimit:

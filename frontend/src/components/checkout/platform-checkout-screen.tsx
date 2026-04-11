@@ -278,6 +278,10 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
       next.push("card");
     }
 
+    if (checkout.offer.debitEnabled) {
+      next.push("debit");
+    }
+
     if (checkout.offer.pixManualEnabled) {
       next.push("pix");
     }
@@ -301,8 +305,17 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   }, [availableMethods]);
 
   const installmentOptions = useMemo(() => {
-    if (!checkout?.offer.cardEnabled) {
+    if (!checkout?.offer.cardEnabled && !checkout?.offer.debitEnabled) {
       return [];
+    }
+
+    if (!checkout?.offer.cardEnabled && checkout.offer.debitEnabled) {
+      return [
+        {
+          value: 1,
+          label: `${formatCurrency(checkout.offer.price)} a vista no debito`
+        }
+      ];
     }
 
     const minimum = checkout.offer.cardSinglePaymentEnabled ? 1 : 2;
@@ -344,6 +357,15 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   const productVisual = checkout?.offer.imageUrl || checkout?.productImageUrl || null;
   const checkoutTitle = checkout?.offer.checkoutDescription || checkout?.offer.title || checkout?.productName;
   const selectedInstallment = selectedMethod === "card" ? formState.installments : 1;
+  const visibleInstallmentOptions =
+    selectedMethod === "debit" && checkout
+      ? [
+          {
+            value: 1,
+            label: `${formatCurrency(checkout.offer.price)} a vista no debito`
+          }
+        ]
+      : installmentOptions;
   const selectedInstallmentValue =
     checkout && selectedInstallment > 0 ? checkout.offer.price / selectedInstallment : 0;
   const documentType = getDocumentType(formState.document);
@@ -394,7 +416,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
       return "Informe um CPF ou CNPJ valido.";
     }
 
-    if (method === "card") {
+    if (method === "card" || method === "debit") {
       if (!mercadoPagoPublicKey) {
         return "Configure NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY para ativar o cartao no checkout.";
       }
@@ -488,7 +510,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
     const checkoutSnapshot = checkoutRef.current;
     const cardFormData = cardFormRef.current?.getCardFormData() as MercadoPagoCardFormData | undefined;
 
-    if (!checkoutSnapshot) {
+    if (!checkoutSnapshot || (method !== "card" && method !== "debit")) {
       setFeedback({
         tone: "error",
         message: "Checkout indisponivel no momento."
@@ -507,16 +529,18 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
     await submitCheckoutPayment({
       productId: checkoutSnapshot.productId,
       offerId: checkoutSnapshot.offerId,
-      paymentMethod: "card",
+      paymentMethod: method,
       customer: buildBuyerPayload(),
       card: {
         token: cardFormData.token,
         paymentMethodId: cardFormData.paymentMethodId,
         issuerId: cardFormData.issuerId || undefined,
         installments:
-          typeof cardFormData.installments === "number"
-            ? cardFormData.installments
-            : Number(cardFormData.installments) || formStateRef.current.installments
+          method === "debit"
+            ? 1
+            : typeof cardFormData.installments === "number"
+              ? cardFormData.installments
+              : Number(cardFormData.installments) || formStateRef.current.installments
       }
     });
   }
@@ -524,7 +548,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   useEffect(() => {
     const checkoutSnapshot = checkout;
 
-    if (!checkoutSnapshot?.offer.cardEnabled) {
+    if (!checkoutSnapshot?.offer.cardEnabled && !checkoutSnapshot?.offer.debitEnabled) {
       cardFormRef.current?.unmount?.();
       cardFormRef.current = null;
       setCardFormError(null);
@@ -712,7 +736,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
       return;
     }
 
-    if (selectedMethod === "card") {
+    if (selectedMethod === "card" || selectedMethod === "debit") {
       formRef.current?.requestSubmit();
       return;
     }
@@ -740,6 +764,10 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   }
 
   const submitLabel = useMemo(() => {
+    if (selectedMethod === "debit") {
+      return isSubmitting ? "PROCESSANDO DEBITO..." : "PAGAR COM DEBITO";
+    }
+
     if (selectedMethod === "pix") {
       return isSubmitting ? "GERANDO PIX..." : "GERAR PIX";
     }
@@ -927,6 +955,8 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                 const config =
                   method === "card"
                     ? { label: "Cartao de Credito", icon: CreditCard }
+                    : method === "debit"
+                      ? { label: "Cartao de Debito", icon: CreditCard }
                     : method === "pix"
                       ? { label: "Pix", icon: QrCode }
                       : { label: "Boleto", icon: Receipt };
@@ -954,7 +984,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
               })}
             </div>
 
-            <div className={cn("mt-6 grid gap-5", selectedMethod === "card" ? "" : "hidden")}>
+            <div className={cn("mt-6 grid gap-5", selectedMethod === "card" || selectedMethod === "debit" ? "" : "hidden")}>
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_170px]">
                 <label className="space-y-2">
                   <span className="text-[0.96rem] font-medium text-[#223149]">Numero do cartao</span>
@@ -965,15 +995,17 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-[0.96rem] font-medium text-[#223149]">Parcelamento</span>
+                  <span className="text-[0.96rem] font-medium text-[#223149]">
+                    {selectedMethod === "debit" ? "Pagamento" : "Parcelamento"}
+                  </span>
                   <div className="relative">
                     <select
                       id="form-checkout__installments"
-                      value={formState.installments}
+                      value={selectedMethod === "debit" ? 1 : formState.installments}
                       onChange={(event) => updateField("installments", Number(event.target.value))}
                       className="h-16 w-full appearance-none rounded-[18px] border border-[#d2dbe7] bg-white px-6 text-[1.02rem] text-[#132035] outline-none transition focus:border-[#7c4dff] focus:ring-4 focus:ring-[#7c4dff]/10"
                     >
-                      {installmentOptions.map((option) => (
+                      {visibleInstallmentOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -1028,7 +1060,9 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
               </label>
 
               <div className="rounded-[24px] border border-[#dbe3ef] bg-[#f8faff] px-5 py-5 text-[0.95rem] leading-7 text-[#5a6880]">
-                Os dados sensiveis do cartao sao tokenizados pelo Mercado Pago no navegador antes do envio ao backend.
+                {selectedMethod === "debit"
+                  ? "Os dados do debito sao tokenizados pelo Mercado Pago no navegador e enviados como pagamento a vista."
+                  : "Os dados sensiveis do cartao sao tokenizados pelo Mercado Pago no navegador antes do envio ao backend."}
               </div>
 
               {cardFormError ? (
@@ -1157,6 +1191,8 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                         ? "Pix"
                         : paymentResult.payment.method === "boleto"
                           ? "por boleto"
+                          : paymentResult.payment.method === "debit"
+                            ? "com cartao de debito"
                           : "com cartao"}
                     </p>
                     <p className="mt-1 text-[0.92rem] text-[#617087]">
@@ -1348,6 +1384,9 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                   {availableMethods.includes("card") ? (
                     <span className="rounded-full border border-[#e0e6ef] bg-[#f8faff] px-3 py-1.5">Cartao</span>
                   ) : null}
+                  {availableMethods.includes("debit") ? (
+                    <span className="rounded-full border border-[#e0e6ef] bg-[#f8faff] px-3 py-1.5">Debito</span>
+                  ) : null}
                   {availableMethods.includes("pix") ? (
                     <span className="rounded-full border border-[#e0e6ef] bg-[#f8faff] px-3 py-1.5">Pix</span>
                   ) : null}
@@ -1362,7 +1401,8 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                   disabled={
                     isSubmitting ||
                     !selectedMethod ||
-                    (selectedMethod === "card" && (!mercadoPagoPublicKey || !isCardFormReady))
+                    ((selectedMethod === "card" || selectedMethod === "debit") &&
+                      (!mercadoPagoPublicKey || !isCardFormReady))
                   }
                   className="checkout-cta-shine mt-8 inline-flex h-[78px] w-full items-center justify-center rounded-full px-6 text-[1.08rem] font-semibold tracking-[0.02em] text-white transition hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-70"
                 >

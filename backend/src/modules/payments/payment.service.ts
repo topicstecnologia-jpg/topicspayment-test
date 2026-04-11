@@ -1,7 +1,7 @@
 import { getPlatformCheckoutRecord } from "../../lib/platform-product-store";
 import { env } from "../../config/env";
 import { AppError } from "../../utils/app-error";
-import { createMercadoPagoPayment } from "./mercado-pago.client";
+import { createMercadoPagoPayment, listMercadoPagoPaymentMethods } from "./mercado-pago.client";
 import {
   assertBrazilianCheckout,
   buildBoletoExpirationDate,
@@ -21,9 +21,16 @@ import type {
   MercadoPagoPaymentResponsePayload
 } from "./payment.types";
 
-function ensurePaymentMethodEnabled(method: CheckoutPaymentMethod, offer: { cardEnabled: boolean; pixManualEnabled: boolean; boletoEnabled: boolean; }) {
+function ensurePaymentMethodEnabled(
+  method: CheckoutPaymentMethod,
+  offer: { cardEnabled: boolean; debitEnabled: boolean; pixManualEnabled: boolean; boletoEnabled: boolean }
+) {
   if (method === "card" && !offer.cardEnabled) {
     throw new AppError("Esta oferta nao aceita pagamento por cartao no momento.", 400);
+  }
+
+  if (method === "debit" && !offer.debitEnabled) {
+    throw new AppError("Esta oferta nao aceita pagamento por cartao de debito no momento.", 400);
   }
 
   if (method === "pix" && !offer.pixManualEnabled) {
@@ -35,7 +42,41 @@ function ensurePaymentMethodEnabled(method: CheckoutPaymentMethod, offer: { card
   }
 }
 
-function buildMercadoPagoPaymentBody(input: CreateCheckoutPaymentInput, checkout: Awaited<ReturnType<typeof getPlatformCheckoutRecord>>) {
+async function resolveMercadoPagoCardType(paymentMethodId: string) {
+  const paymentMethods = await listMercadoPagoPaymentMethods();
+  const paymentMethod = paymentMethods.find((entry) => entry.id === paymentMethodId);
+
+  if (!paymentMethod || paymentMethod.status === "inactive") {
+    throw new AppError("O metodo de cartao selecionado nao esta disponivel no Mercado Pago.", 400);
+  }
+
+  return paymentMethod.payment_type_id;
+}
+
+async function assertCardTypeMatchesSelection(
+  input: Extract<CreateCheckoutPaymentInput, { paymentMethod: "card" | "debit" }>
+) {
+  const paymentTypeId = await resolveMercadoPagoCardType(input.card.paymentMethodId);
+
+  if (input.paymentMethod === "debit" && paymentTypeId !== "debit_card") {
+    throw new AppError(
+      "O cartao informado nao foi identificado como cartao de debito. Use um cartao de debito suportado pelo Mercado Pago.",
+      400
+    );
+  }
+
+  if (input.paymentMethod === "card" && paymentTypeId === "debit_card") {
+    throw new AppError(
+      "O cartao informado foi identificado como debito. Escolha a opcao de cartao de debito para continuar.",
+      400
+    );
+  }
+}
+
+async function buildMercadoPagoPaymentBody(
+  input: CreateCheckoutPaymentInput,
+  checkout: Awaited<ReturnType<typeof getPlatformCheckoutRecord>>
+) {
   assertBrazilianCheckout(input.customer);
 
   if (checkout.offer.price <= 0) {
@@ -55,7 +96,12 @@ function buildMercadoPagoPaymentBody(input: CreateCheckoutPaymentInput, checkout
     transaction_amount: checkout.offer.price,
     description,
     external_reference: externalReference,
-    payment_method_id: input.paymentMethod === "pix" ? "pix" : input.paymentMethod === "boleto" ? "bolbradesco" : input.card.paymentMethodId,
+    payment_method_id:
+      input.paymentMethod === "pix"
+        ? "pix"
+        : input.paymentMethod === "boleto"
+          ? "bolbradesco"
+          : input.card.paymentMethodId,
     statement_descriptor: checkout.invoiceStatementDescriptor.slice(0, 13) || undefined,
     notification_url: env.MERCADO_PAGO_WEBHOOK_URL,
     metadata: {
@@ -103,17 +149,28 @@ function buildMercadoPagoPaymentBody(input: CreateCheckoutPaymentInput, checkout
     }
   };
 
-  if (input.paymentMethod === "card") {
-    if (input.card.installments > checkout.offer.cardInstallmentLimit) {
+  if (input.paymentMethod === "card" || input.paymentMethod === "debit") {
+    await assertCardTypeMatchesSelection(input);
+
+    if (input.paymentMethod === "card" && input.card.installments > checkout.offer.cardInstallmentLimit) {
       throw new AppError("A oferta nao permite esse numero de parcelas.", 400);
     }
 
-    if (!checkout.offer.cardSinglePaymentEnabled && input.card.installments === 1) {
+    if (
+      input.paymentMethod === "card" &&
+      !checkout.offer.cardSinglePaymentEnabled &&
+      input.card.installments === 1
+    ) {
       throw new AppError("Esta oferta exige parcelamento minimo de 2x no cartao.", 400);
     }
 
+    if (input.paymentMethod === "debit") {
+      body.installments = 1;
+    } else {
+      body.installments = input.card.installments;
+    }
+
     body.token = input.card.token;
-    body.installments = input.card.installments;
     body.issuer_id = input.card.issuerId;
     return { body, externalReference, description };
   }
@@ -141,6 +198,10 @@ function buildMercadoPagoPaymentBody(input: CreateCheckoutPaymentInput, checkout
 function buildSuccessMessage(method: CheckoutPaymentMethod) {
   if (method === "card") {
     return "Pagamento com cartao enviado ao Mercado Pago com sucesso.";
+  }
+
+  if (method === "debit") {
+    return "Pagamento com cartao de debito enviado ao Mercado Pago com sucesso.";
   }
 
   if (method === "pix") {
@@ -191,7 +252,7 @@ function mapPaymentSummary(
           }
         : null,
     card:
-      method === "card"
+      method === "card" || method === "debit"
         ? {
             lastFourDigits: payment.card?.last_four_digits ?? null,
             firstSixDigits: payment.card?.first_six_digits ?? null,
@@ -206,7 +267,7 @@ export async function createCheckoutPayment(
   input: CreateCheckoutPaymentInput
 ): Promise<CheckoutPaymentResponse> {
   const checkout = await getPlatformCheckoutRecord(input.productId, input.offerId);
-  const { body, externalReference, description } = buildMercadoPagoPaymentBody(input, checkout);
+  const { body, externalReference, description } = await buildMercadoPagoPaymentBody(input, checkout);
   const payment = await createMercadoPagoPayment(body, externalReference);
 
   return {

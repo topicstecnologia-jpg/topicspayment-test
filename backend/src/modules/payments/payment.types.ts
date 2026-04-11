@@ -1,4 +1,4 @@
-export type CheckoutPaymentMethod = "card" | "pix" | "boleto";
+export type CheckoutPaymentMethod = "card" | "debit" | "pix" | "boleto";
 export type CheckoutAudience = "br" | "international";
 export type CheckoutDocumentType = "CPF" | "CNPJ";
 
@@ -34,6 +34,14 @@ export interface CreateCheckoutCardPaymentInput {
   card: CheckoutCardPaymentInput;
 }
 
+export interface CreateCheckoutDebitPaymentInput {
+  productId: string;
+  offerId: string;
+  paymentMethod: "debit";
+  customer: CheckoutBuyerInput;
+  card: CheckoutCardPaymentInput;
+}
+
 export interface CreateCheckoutPixPaymentInput {
   productId: string;
   offerId: string;
@@ -51,6 +59,7 @@ export interface CreateCheckoutBoletoPaymentInput {
 
 export type CreateCheckoutPaymentInput =
   | CreateCheckoutCardPaymentInput
+  | CreateCheckoutDebitPaymentInput
   | CreateCheckoutPixPaymentInput
   | CreateCheckoutBoletoPaymentInput;
 
@@ -158,6 +167,7 @@ export interface MercadoPagoPaymentResponsePayload {
   id: number | string;
   installments?: number | null;
   payment_method_id?: string | null;
+  payment_type_id?: string | null;
   point_of_interaction?: {
     transaction_data?: {
       qr_code?: string | null;
@@ -178,4 +188,11 @@ export interface MercadoPagoPaymentResponsePayload {
     first_six_digits?: string | null;
     last_four_digits?: string | null;
   };
+}
+
+export interface MercadoPagoPaymentMethodRecord {
+  id: string;
+  name?: string | null;
+  payment_type_id: string;
+  status?: string | null;
 }
