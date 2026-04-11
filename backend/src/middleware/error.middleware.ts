@@ -16,6 +16,14 @@ export function errorHandler(
   _next: NextFunction
 ) {
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) {
+      console.error("[app-error]", {
+        message: error.message,
+        statusCode: error.statusCode,
+        details: error.details
+      });
+    }
+
     return response.status(error.statusCode).json({
       message: error.message,
       details: error.details
