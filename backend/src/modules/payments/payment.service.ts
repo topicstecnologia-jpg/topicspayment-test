@@ -42,6 +42,28 @@ function ensurePaymentMethodEnabled(
   }
 }
 
+function resolveMercadoPagoPictureUrl(value?: string | null) {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value.length > 1800) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(value);
+
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return value;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+}
+
 async function resolveMercadoPagoCardType(paymentMethodId: string) {
   const paymentMethods = await listMercadoPagoPaymentMethods();
   const paymentMethod = paymentMethods.find((entry) => entry.id === paymentMethodId);
@@ -132,7 +154,9 @@ async function buildMercadoPagoPaymentBody(
           description: checkout.productName,
           quantity: 1,
           unit_price: checkout.offer.price,
-          picture_url: checkout.offer.imageUrl || checkout.productImageUrl,
+          picture_url: resolveMercadoPagoPictureUrl(
+            checkout.offer.imageUrl || checkout.productImageUrl
+          ),
           category_id: checkout.productId
         }
       ],
