@@ -617,20 +617,20 @@ textarea {
 
 @keyframes checkout-button-shine {
   0% {
-    transform: translateX(-185%) skewX(-24deg);
+    transform: translateX(-190%) skewX(-20deg);
     opacity: 0;
   }
 
-  20% {
+  18% {
     opacity: 0;
   }
 
-  38% {
-    opacity: 0.9;
+  36% {
+    opacity: 1;
   }
 
   100% {
-    transform: translateX(235%) skewX(-24deg);
+    transform: translateX(225%) skewX(-20deg);
     opacity: 0;
   }
 }
@@ -667,18 +667,23 @@ textarea {
 .checkout-cta-shine::after {
   content: "";
   position: absolute;
-  inset: -26% auto -26% -18%;
-  width: 34%;
+  inset: -18% auto -18% -14%;
+  width: 26%;
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(232, 255, 244, 0.14) 16%,
-    rgba(255, 255, 255, 0.78) 48%,
-    rgba(212, 255, 232, 0.18) 78%,
+    rgba(219, 255, 236, 0.08) 12%,
+    rgba(255, 255, 255, 0.42) 24%,
+    rgba(255, 255, 255, 0.96) 50%,
+    rgba(255, 255, 255, 0.42) 76%,
+    rgba(219, 255, 236, 0.08) 88%,
     rgba(255, 255, 255, 0) 100%
   );
   pointer-events: none;
-  filter: blur(10px);
-  transform: translateX(-185%) skewX(-24deg);
-  animation: checkout-button-shine 3.15s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  filter: blur(4px);
+  box-shadow:
+    0 0 26px rgba(255, 255, 255, 0.42),
+    0 0 48px rgba(218, 255, 234, 0.18);
+  transform: translateX(-190%) skewX(-20deg);
+  animation: checkout-button-shine 2.8s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
 }

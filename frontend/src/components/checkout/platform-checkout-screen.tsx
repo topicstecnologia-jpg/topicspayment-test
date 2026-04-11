@@ -719,7 +719,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                 <button
                   type="submit"
                   form={checkoutFormId}
-                  className="checkout-cta-shine mt-8 inline-flex h-[68px] w-full items-center justify-center rounded-[20px] border border-[#0f7a51] px-6 text-[1.02rem] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_24px_60px_rgba(7,113,72,0.24)] transition hover:brightness-[1.03]"
+                  className="checkout-cta-shine mt-8 inline-flex h-[70px] w-full items-center justify-center rounded-full border border-[#0f7a51] px-6 text-[1.02rem] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_24px_60px_rgba(7,113,72,0.24)] transition hover:brightness-[1.03]"
                 >
                   {isSubmitting ? "VALIDANDO DADOS..." : "COMPRAR AGORA"}
                 </button>
