@@ -16,6 +16,8 @@ import {
   ShieldCheck
 } from "lucide-react";
 
+import { PlatformBottomBlur } from "@/components/platform/platform-bottom-blur";
+import { PlatformEnergyLines } from "@/components/platform/platform-energy-lines";
 import { ApiError, authApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { PlatformCheckoutItem } from "@/types/platform";
@@ -113,6 +115,24 @@ function getInitials(name: string) {
   }
 
   return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
+function CheckoutFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="platform-compact relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#edf2fb_0%,#e7edf7_54%,#dee6f3_100%)] px-4 py-6 text-[#162032] sm:px-6 lg:px-8 lg:py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_14%,rgba(140,82,255,0.1),transparent_24%),radial-gradient(circle_at_82%_8%,rgba(196,166,255,0.12),transparent_18%),radial-gradient(circle_at_50%_100%,rgba(140,82,255,0.08),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.55)_0%,rgba(255,255,255,0.08)_32%,rgba(255,255,255,0.02)_100%)]" />
+      <div className="auth-noise pointer-events-none absolute inset-0 opacity-[0.06]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(124,77,255,0.045)_16%,transparent_30%,transparent_70%,rgba(124,77,255,0.04)_84%,transparent_100%)] opacity-80" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[linear-gradient(180deg,rgba(255,255,255,0.3),rgba(255,255,255,0))]" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-soft-light [mask-image:linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.22)_48%,rgba(0,0,0,0.9)_100%)]">
+        <PlatformEnergyLines />
+      </div>
+      <div className="pointer-events-none absolute inset-x-[14%] bottom-[-72px] h-44 rounded-full bg-[radial-gradient(circle,rgba(140,82,255,0.18),rgba(196,166,255,0.08)_42%,transparent_72%)] blur-[52px]" />
+
+      <div className="relative z-[1]">{children}</div>
+      <PlatformBottomBlur />
+    </div>
+  );
 }
 
 export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProps) {
@@ -317,20 +337,20 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#eef2f8_0%,#e8edf6_100%)] px-4 py-10 text-[#162032] sm:px-6 lg:px-8">
+      <CheckoutFrame>
         <div className="mx-auto flex min-h-[70vh] max-w-6xl items-center justify-center rounded-[36px] border border-[#dbe3ef] bg-white/80 shadow-[0_24px_80px_rgba(24,38,58,0.08)]">
           <div className="flex items-center gap-3 text-[1rem] font-semibold text-[#445269]">
             <Loader2 className="h-5 w-5 animate-spin" />
             Carregando checkout...
           </div>
         </div>
-      </div>
+      </CheckoutFrame>
     );
   }
 
   if (errorMessage || !checkout) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#eef2f8_0%,#e8edf6_100%)] px-4 py-10 text-[#162032] sm:px-6 lg:px-8">
+      <CheckoutFrame>
         <div className="mx-auto max-w-4xl rounded-[36px] border border-[#dbe3ef] bg-white p-8 shadow-[0_24px_80px_rgba(24,38,58,0.08)] sm:p-10">
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#eef3ff] text-[#3e63ff]">
             <ShieldCheck className="h-7 w-7" />
@@ -349,12 +369,12 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
             Voltar
           </Link>
         </div>
-      </div>
+      </CheckoutFrame>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#eef2f8_0%,#e7edf7_100%)] px-4 py-6 text-[#162032] sm:px-6 lg:px-8 lg:py-10">
+    <CheckoutFrame>
       <div className="mx-auto max-w-[1180px]">
         <Link
           href="/"
@@ -725,6 +745,6 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
           </aside>
         </div>
       </div>
-    </div>
+    </CheckoutFrame>
   );
 }
