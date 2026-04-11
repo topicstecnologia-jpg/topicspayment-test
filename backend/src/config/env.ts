@@ -17,6 +17,11 @@ const optionalString = z.preprocess(
   z.string().optional()
 );
 
+const optionalUrl = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.string().url().optional()
+);
+
 const optionalEmailProvider = z.preprocess(
   (value) => (value === "" ? undefined : value),
   z.enum(["console", "resend"]).optional()
@@ -39,6 +44,9 @@ const envSchema = z.object({
   EMAIL_FROM_ADDRESS: optionalEmail,
   EMAIL_REPLY_TO: optionalEmail,
   RESEND_API_KEY: optionalString,
+  MERCADO_PAGO_ACCESS_TOKEN: optionalString,
+  MERCADO_PAGO_API_BASE_URL: z.string().url().default("https://api.mercadopago.com"),
+  MERCADO_PAGO_WEBHOOK_URL: optionalUrl,
   ADMIN_NAME: z.string().default("TOPICS Admin"),
   ADMIN_EMAIL: optionalEmail,
   ADMIN_PASSWORD: optionalPassword

@@ -29,6 +29,7 @@ import {
 } from "../controllers/platform.controller";
 import { authorizeRoles, requireAuth } from "../middleware/auth.middleware";
 import { validateBody } from "../middleware/validate.middleware";
+import { paymentRouter } from "../modules/payments/payment.routes";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -108,6 +109,7 @@ apiRouter.delete(
 apiRouter.get("/admin/overview", disableSensitiveCaching, requireAuth, authorizeRoles("admin"), getAdminOverview);
 apiRouter.get("/platform/checkout/code/:offerCode", disableSensitiveCaching, getPlatformCheckoutByCode);
 apiRouter.get("/platform/checkout/:productId", disableSensitiveCaching, getPlatformCheckout);
+apiRouter.use("/platform/payments", disableSensitiveCaching, paymentRouter);
 apiRouter.get("/platform/dashboard", disableSensitiveCaching, requireAuth, getPlatformDashboard);
 apiRouter.get("/platform/products", disableSensitiveCaching, requireAuth, getPlatformProducts);
 apiRouter.post(

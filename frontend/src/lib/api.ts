@@ -16,6 +16,8 @@ import type {
 } from "@/types/auth";
 import type {
   PlatformCheckoutResponse,
+  PlatformCheckoutPaymentPayload,
+  PlatformCheckoutPaymentResponse,
   PlatformDashboardResponse,
   PlatformProductDeleteResponse,
   PlatformProductMutationResponse,
@@ -214,6 +216,13 @@ export const authApi = {
     return apiRequest<PlatformCheckoutResponse>(
       `/platform/checkout/code/${encodeURIComponent(offerCode)}`
     );
+  },
+
+  createPlatformCheckoutPayment(values: PlatformCheckoutPaymentPayload) {
+    return apiRequest<PlatformCheckoutPaymentResponse>("/platform/payments/checkout", {
+      method: "POST",
+      body: JSON.stringify(values)
+    });
   },
 
   createPlatformProduct(values: ProductFormInput) {

@@ -115,6 +115,89 @@ export interface PlatformCheckoutResponse {
   item: PlatformCheckoutItem;
 }
 
+export type PlatformCheckoutPaymentMethod = "card" | "pix" | "boleto";
+export type PlatformCheckoutAudience = "br" | "international";
+
+export interface PlatformCheckoutBuyerInput {
+  fullName: string;
+  email: string;
+  phone: string;
+  document: string;
+  audience: PlatformCheckoutAudience;
+}
+
+export interface PlatformCheckoutBillingAddressInput {
+  zipCode: string;
+  streetName: string;
+  streetNumber: string;
+  neighborhood: string;
+  city: string;
+  federalUnit: string;
+}
+
+export interface PlatformCheckoutCardPaymentInput {
+  token: string;
+  paymentMethodId: string;
+  issuerId?: string;
+  installments: number;
+}
+
+export type PlatformCheckoutPaymentPayload =
+  | {
+      productId: string;
+      offerId: string;
+      paymentMethod: "card";
+      customer: PlatformCheckoutBuyerInput;
+      card: PlatformCheckoutCardPaymentInput;
+    }
+  | {
+      productId: string;
+      offerId: string;
+      paymentMethod: "pix";
+      customer: PlatformCheckoutBuyerInput;
+    }
+  | {
+      productId: string;
+      offerId: string;
+      paymentMethod: "boleto";
+      customer: PlatformCheckoutBuyerInput;
+      billingAddress: PlatformCheckoutBillingAddressInput;
+    };
+
+export interface PlatformCheckoutPaymentSummary {
+  provider: "mercado_pago";
+  providerPaymentId: string;
+  externalReference: string;
+  method: PlatformCheckoutPaymentMethod;
+  status: string;
+  statusDetail: string | null;
+  amount: number;
+  currency: string;
+  description: string;
+  ticketUrl: string | null;
+  paidAmount: number | null;
+  expiresAt: string | null;
+  pix: {
+    qrCode: string | null;
+    qrCodeBase64: string | null;
+  } | null;
+  boleto: {
+    barcode: string | null;
+    digitableLine: string | null;
+  } | null;
+  card: {
+    lastFourDigits: string | null;
+    firstSixDigits: string | null;
+    installments: number | null;
+    installmentAmount: number | null;
+  } | null;
+}
+
+export interface PlatformCheckoutPaymentResponse {
+  message: string;
+  payment: PlatformCheckoutPaymentSummary;
+}
+
 export interface PlatformProductDeleteResponse {
   message: string;
   productId: string;
