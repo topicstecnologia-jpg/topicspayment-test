@@ -1,6 +1,24 @@
-import "dotenv/config";
+import { existsSync } from "fs";
+import { resolve } from "path";
+
+import { config as loadDotenv } from "dotenv";
 
 import { z } from "zod";
+
+const envCandidates = [
+  resolve(process.cwd(), ".env"),
+  resolve(__dirname, "../../.env"),
+  resolve(__dirname, "../../../.env")
+];
+
+for (const envPath of envCandidates) {
+  if (!existsSync(envPath)) {
+    continue;
+  }
+
+  loadDotenv({ path: envPath });
+  break;
+}
 
 const optionalEmail = z.preprocess(
   (value) => (value === "" ? undefined : value),
