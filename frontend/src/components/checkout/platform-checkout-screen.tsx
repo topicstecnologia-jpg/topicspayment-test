@@ -15,6 +15,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 
+import { PlatformPixPaymentScreen } from "@/components/checkout/platform-pix-payment-screen";
 import { PlatformBottomBlur } from "@/components/platform/platform-bottom-blur";
 import { PlatformEnergyLines } from "@/components/platform/platform-energy-lines";
 import { ApiError, authApi } from "@/lib/api";
@@ -203,6 +204,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   const [formState, setFormState] = useState<CheckoutFormState>(defaultFormState);
   const [feedback, setFeedback] = useState<CheckoutFeedback | null>(null);
   const [paymentResult, setPaymentResult] = useState<PlatformCheckoutPaymentResponse | null>(null);
+  const [paymentGeneratedAt, setPaymentGeneratedAt] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCardFormReady, setIsCardFormReady] = useState(false);
   const [cardFormError, setCardFormError] = useState<string | null>(null);
@@ -376,6 +378,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
   function resetCheckoutFeedback() {
     setFeedback(null);
     setPaymentResult(null);
+    setPaymentGeneratedAt(null);
   }
 
   function updateField<K extends keyof CheckoutFormState>(key: K, value: CheckoutFormState[K]) {
@@ -478,6 +481,7 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
       const response = await authApi.createPlatformCheckoutPayment(payload);
 
       setPaymentResult(response);
+      setPaymentGeneratedAt(new Date().toISOString());
       setFeedback({
         tone: "success",
         message: response.message
@@ -807,6 +811,19 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
           </p>
         </div>
       </CheckoutFrame>
+    );
+  }
+
+  if (paymentResult?.payment.method === "pix") {
+    return (
+      <PlatformPixPaymentScreen
+        checkout={checkout}
+        payment={paymentResult.payment}
+        feedback={feedback}
+        generatedAt={paymentGeneratedAt}
+        onBack={resetCheckoutFeedback}
+        onCopy={handleCopy}
+      />
     );
   }
 
@@ -1187,13 +1204,11 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                   <div>
                     <p className="text-[1.05rem] font-semibold text-[#132035]">
                       Pagamento{" "}
-                      {paymentResult.payment.method === "pix"
-                        ? "Pix"
-                        : paymentResult.payment.method === "boleto"
+                      {paymentResult.payment.method === "boleto"
                           ? "por boleto"
                           : paymentResult.payment.method === "debit"
                             ? "com cartao de debito"
-                          : "com cartao"}
+                            : "com cartao"}
                     </p>
                     <p className="mt-1 text-[0.92rem] text-[#617087]">
                       Status atual: {paymentResult.payment.statusDetail || paymentResult.payment.status}
@@ -1204,36 +1219,6 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                     ID {paymentResult.payment.providerPaymentId}
                   </div>
                 </div>
-
-                {paymentResult.payment.pix?.qrCodeBase64 ? (
-                  <div className="mt-5 grid gap-5 md:grid-cols-[220px_minmax(0,1fr)] md:items-start">
-                    <div className="overflow-hidden rounded-[24px] border border-[#dbe3ef] bg-white p-4">
-                      <img
-                        src={`data:image/png;base64,${paymentResult.payment.pix.qrCodeBase64}`}
-                        alt="QR Code Pix"
-                        className="h-full w-full rounded-[18px]"
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="rounded-[20px] border border-[#dbe3ef] bg-[#f8faff] px-4 py-4">
-                        <p className="text-[0.9rem] font-semibold text-[#223149]">Pix copia e cola</p>
-                        <p className="mt-2 break-all text-[0.92rem] leading-7 text-[#516077]">
-                          {paymentResult.payment.pix.qrCode}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => void handleCopy(paymentResult.payment.pix?.qrCode)}
-                        className="inline-flex items-center gap-2 rounded-full border border-[#dbe3ef] bg-white px-5 py-3 text-[0.92rem] font-semibold text-[#23334c] transition hover:bg-[#f8faff]"
-                      >
-                        <Copy className="h-4 w-4" />
-                        Copiar codigo Pix
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
 
                 {paymentResult.payment.boleto ? (
                   <div className="mt-5 space-y-4">
