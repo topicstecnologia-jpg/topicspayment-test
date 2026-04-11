@@ -41,11 +41,57 @@ function resolveMercadoPagoErrorMessage(data: Record<string, unknown>) {
   return "Nao foi possivel processar o pagamento com o Mercado Pago.";
 }
 
+async function parseMercadoPagoResponse(response: Response) {
+  const rawBody = await response.text();
+
+  if (!rawBody.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(rawBody) as Record<string, unknown>;
+  } catch {
+    throw new AppError(
+      "O Mercado Pago retornou uma resposta inesperada. Verifique os logs do backend na Vercel.",
+      502,
+      {
+        status: response.status,
+        rawBody: rawBody.slice(0, 500)
+      }
+    );
+  }
+}
+
+async function requestMercadoPago(path: string, init: RequestInit) {
+  try {
+    const response = await fetch(buildMercadoPagoUrl(path), init);
+    const data = await parseMercadoPagoResponse(response);
+
+    if (!response.ok) {
+      throw new AppError(resolveMercadoPagoErrorMessage(data), response.status, data);
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      "Falha ao conectar com o Mercado Pago. Verifique as variaveis do deploy e tente novamente.",
+      502,
+      {
+        error: error instanceof Error ? error.message : String(error)
+      }
+    );
+  }
+}
+
 export async function createMercadoPagoPayment(
   body: MercadoPagoPaymentRequest,
   idempotencyKey: string
 ) {
-  const response = await fetch(buildMercadoPagoUrl("/v1/payments"), {
+  const data = await requestMercadoPago("/v1/payments", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
@@ -55,18 +101,12 @@ export async function createMercadoPagoPayment(
     body: JSON.stringify(body)
   });
 
-  const data = (await response.json()) as Record<string, unknown>;
-
-  if (!response.ok) {
-    throw new AppError(resolveMercadoPagoErrorMessage(data), response.status, data);
-  }
-
   return data as unknown as MercadoPagoPaymentResponsePayload;
 }
 
 export async function listMercadoPagoPaymentMethods() {
   if (!paymentMethodsCachePromise) {
-    paymentMethodsCachePromise = fetch(buildMercadoPagoUrl("/v1/payment_methods"), {
+    paymentMethodsCachePromise = requestMercadoPago("/v1/payment_methods", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
@@ -74,13 +114,7 @@ export async function listMercadoPagoPaymentMethods() {
       }
     })
       .then(async (response) => {
-        const data = (await response.json()) as Record<string, unknown>;
-
-        if (!response.ok) {
-          throw new AppError(resolveMercadoPagoErrorMessage(data), response.status, data);
-        }
-
-        return data as unknown as MercadoPagoPaymentMethodRecord[];
+        return response as unknown as MercadoPagoPaymentMethodRecord[];
       })
       .catch((error) => {
         paymentMethodsCachePromise = null;
