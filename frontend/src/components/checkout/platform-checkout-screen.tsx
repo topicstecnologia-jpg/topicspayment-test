@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
   CheckCircle2,
   ChevronDown,
   CreditCard,
@@ -361,13 +359,6 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
           <p className="mt-3 max-w-2xl text-[1rem] leading-7 text-[#5f6c80]">
             {errorMessage ?? "Esta oferta não está disponível para pagamento no momento."}
           </p>
-          <Link
-            href="/"
-            className="mt-8 inline-flex items-center gap-2 rounded-full border border-[#d7dfea] bg-[#f7f9fc] px-5 py-3 text-sm font-semibold text-[#263449] transition hover:bg-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Link>
         </div>
       </CheckoutFrame>
     );
@@ -376,14 +367,6 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
   return (
     <CheckoutFrame>
       <div className="mx-auto max-w-[1180px]">
-        <Link
-          href="/"
-          className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#d7dfea] bg-white/84 px-4 py-2.5 text-sm font-semibold text-[#334158] shadow-[0_10px_28px_rgba(24,38,58,0.06)] transition hover:bg-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
-
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_360px] lg:items-start">
           <form
             id={checkoutFormId}
