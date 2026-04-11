@@ -126,6 +126,11 @@ export type ProductFormInput = z.infer<typeof productFormSchema>;
 
 const productOfferSchema = z.object({
   id: z.string().min(1).optional(),
+  code: z
+    .string()
+    .max(16, "O código da oferta precisa ter até 16 caracteres.")
+    .transform((value) => value.trim().toUpperCase().replace(/[^A-Z0-9]+/g, ""))
+    .optional(),
   title: z.string().min(2, "Informe o nome da oferta."),
   checkoutDescription: z.string().max(180, "A descricao do checkout precisa ter ate 180 caracteres.").default(""),
   description: z.string().max(600, "A descricao da oferta precisa ter ate 600 caracteres.").default(""),

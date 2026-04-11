@@ -38,6 +38,7 @@ import type {
 } from "@/types/platform";
 
 import {
+  buildOfferCode,
   buildProductCover,
   ensurePrimaryOffer,
   formatCurrency,
@@ -128,20 +129,8 @@ const baseCategoryOptions = [
   "Consultoria"
 ];
 
-function hashValue(value: string) {
-  return Array.from(value).reduce((total, char) => total + char.charCodeAt(0), 0);
-}
-
-function buildOfferCode(productId: string, offerId: string, index: number) {
-  return hashValue(`${productId}:${offerId}:${index}`)
-    .toString(16)
-    .toUpperCase()
-    .padStart(8, "0")
-    .slice(-8);
-}
-
-function buildOfferCheckoutUrl(productId: string, offerId: string) {
-  const pathname = `/checkout/${encodeURIComponent(productId)}?offer=${encodeURIComponent(offerId)}`;
+function buildOfferCheckoutUrl(offerCode: string) {
+  const pathname = `/${encodeURIComponent(offerCode)}`;
 
   if (typeof window === "undefined") {
     return pathname;
@@ -392,6 +381,7 @@ function PlatformToggle({
 
 function buildEmptyOffer(isPrimary: boolean): ProductEditorOffer {
   return {
+    code: "",
     title: "",
     checkoutDescription: "",
     description: "",
@@ -656,7 +646,8 @@ export function ProductEditor({
         (watchedValues.offers ?? []).map((offer: ProductEditorInput["offers"][number], index: number) => ({
           ...offer,
           imageUrl: offer.imageUrl ?? null,
-          id: offer.id || `${product.id}-offer-${index + 1}`
+          id: offer.id || `${product.id}-offer-${index + 1}`,
+          code: offer.code || buildOfferCode(product.id, offer.id || `${product.id}-offer-${index + 1}`)
         }))
       ),
       coupons: (watchedValues.coupons ?? []).map((coupon: ProductEditorInput["coupons"][number], index: number) => ({
@@ -686,11 +677,11 @@ export function ProductEditor({
       ? selectedOffer?.id || `${product.id}-offer-${selectedOfferIndex + 1}`
       : null;
   const selectedOfferCode =
-    selectedOfferId && selectedOfferIndex != null
-      ? buildOfferCode(product.id, selectedOfferId, selectedOfferIndex)
+    selectedOfferId
+      ? selectedOffer?.code || buildOfferCode(product.id, selectedOfferId)
       : null;
   const selectedOfferCheckoutUrl =
-    selectedOfferId ? buildOfferCheckoutUrl(product.id, selectedOfferId) : null;
+    selectedOfferCode ? buildOfferCheckoutUrl(selectedOfferCode) : null;
   const selectedOfferCheckoutActive = Boolean(selectedOffer?.active);
   const selectedOfferPreview = selectedOffer?.imageUrl || coverPreview;
   const isCreatingNewOffer =
@@ -819,7 +810,7 @@ export function ProductEditor({
 
     const offer = offersValues[index];
     const offerId = offer?.id || `${product.id}-offer-${index + 1}`;
-    const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
+    const checkoutUrl = buildOfferCheckoutUrl(offer?.code || buildOfferCode(product.id, offerId));
 
     if (!offer?.active) {
       setOffersFeedback("Ative a oferta para compartilhar o checkout.");
@@ -841,7 +832,7 @@ export function ProductEditor({
 
     const offer = offersValues[index];
     const offerId = offer?.id || `${product.id}-offer-${index + 1}`;
-    const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
+    const checkoutUrl = buildOfferCheckoutUrl(offer?.code || buildOfferCode(product.id, offerId));
 
     if (!offer?.active) {
       setOffersFeedback("Ative a oferta para visualizar o checkout.");
@@ -1898,11 +1889,11 @@ export function ProductEditor({
                             const currentOfferBillingCycle =
                               (currentOffer?.billingCycle ?? "one_time") as PlatformProductOfferBillingCycle;
                             const offerId = currentOffer?.id || `${product.id}-offer-${index + 1}`;
-                            const offerCode = buildOfferCode(product.id, offerId, index);
+                            const offerCode = currentOffer?.code || buildOfferCode(product.id, offerId);
                             const isSelected = selectedOfferIndex === index;
                             const isPrimary = currentOffer?.isPrimary;
                             const isOfferActive = currentOffer?.active ?? true;
-                            const checkoutUrl = buildOfferCheckoutUrl(product.id, offerId);
+                            const checkoutUrl = buildOfferCheckoutUrl(offerCode);
                             const isCheckoutEnabled = Boolean(isOfferActive);
 
                             return (
@@ -1917,6 +1908,7 @@ export function ProductEditor({
                               >
                                 <input type="hidden" {...register(`offers.${index}.billingCycle` as const)} />
                                 <input type="hidden" {...register(`offers.${index}.active` as const)} />
+                                <input type="hidden" {...register(`offers.${index}.code` as const)} />
 
                                 <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[112px_minmax(0,1fr)_110px_110px_120px_112px_72px_264px] xl:items-center xl:gap-x-3">
                                   <div className="space-y-1">

@@ -28,6 +28,21 @@ function hashValue(value: string) {
   return Array.from(value).reduce((total, char) => total + char.charCodeAt(0), 0);
 }
 
+function hashOfferCodeSeed(value: string) {
+  let hash = 2166136261;
+
+  for (const char of value) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(-7);
+}
+
+export function buildOfferCode(productId: string, offerId: string) {
+  return hashOfferCodeSeed(`${productId}:${offerId}`);
+}
+
 function inferProductType(name: string, category: string): PlatformProductType {
   const fingerprint = `${name} ${category}`.toLowerCase();
 
@@ -275,7 +290,8 @@ export function mergeProductWithEditorValues(
       values.offers.map((offer: ProductEditorInput["offers"][number], index: number) => ({
         ...offer,
         imageUrl: offer.imageUrl ?? null,
-        id: offer.id || `${product.id}-offer-${index + 1}`
+        id: offer.id || `${product.id}-offer-${index + 1}`,
+        code: offer.code?.trim().toUpperCase() || buildOfferCode(product.id, offer.id || `${product.id}-offer-${index + 1}`)
       }))
     ),
     coupons: values.coupons.map((coupon: ProductEditorInput["coupons"][number], index: number) => ({

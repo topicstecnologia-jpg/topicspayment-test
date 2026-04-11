@@ -24,7 +24,8 @@ type CheckoutPaymentMethod = "card" | "pix" | "boleto";
 type CheckoutAudience = "br" | "international";
 
 interface PlatformCheckoutScreenProps {
-  productId: string;
+  productId?: string;
+  offerCode?: string;
 }
 
 interface CheckoutFormState {
@@ -133,7 +134,7 @@ function CheckoutFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProps) {
+export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckoutScreenProps) {
   const checkoutFormId = "platform-checkout-form";
   const searchParams = useSearchParams();
   const offerId = searchParams.get("offer") ?? undefined;
@@ -153,8 +154,13 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
     setIsLoading(true);
     setErrorMessage(null);
 
-    authApi
-      .getPlatformCheckout(productId, offerId)
+    const request = offerCode
+      ? authApi.getPlatformCheckoutByCode(offerCode)
+      : productId
+        ? authApi.getPlatformCheckout(productId, offerId)
+        : Promise.reject(new Error("Checkout sem identificador."));
+
+    request
       .then((response) => {
         if (!isMounted) {
           return;
@@ -180,7 +186,7 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
     return () => {
       isMounted = false;
     };
-  }, [offerId, productId]);
+  }, [offerCode, offerId, productId]);
 
   const availableMethods = useMemo<CheckoutPaymentMethod[]>(() => {
     if (!checkout) {
@@ -723,7 +729,7 @@ export function PlatformCheckoutScreen({ productId }: PlatformCheckoutScreenProp
             </div>
 
             <div className="mt-5 rounded-[24px] border border-[#dbe3ef] bg-white/82 px-5 py-5 text-[0.92rem] leading-7 text-[#5f6d82] shadow-[0_16px_40px_rgba(24,38,58,0.06)]">
-              A oferta permanece ativa enquanto o criador mantiver este produto disponível. Quando a integração com o Mercado Pago for conectada, este mesmo link continuará sendo o endereço oficial de pagamento do cliente.
+              A oferta permanece disponível enquanto estiver ativa. Quando a integração com o Mercado Pago for conectada, este mesmo link continuará sendo o endereço oficial de pagamento do cliente.
             </div>
           </aside>
         </div>

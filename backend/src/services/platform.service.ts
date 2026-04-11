@@ -3,6 +3,7 @@ import {
   createPlatformProductRecord,
   deletePlatformProductRecord,
   getPlatformCheckoutRecord,
+  getPlatformCheckoutRecordByCode,
   listPlatformProductRecords,
   setPlatformProductActiveState,
   updatePlatformProductRecord,
@@ -280,6 +281,14 @@ export async function deletePlatformProduct(userId: string, productId: string) {
 
 export async function getCheckoutPayload(productId: string, offerId?: string) {
   const checkout = await getPlatformCheckoutRecord(productId, offerId);
+
+  return {
+    item: checkout
+  };
+}
+
+export async function getCheckoutPayloadByCode(offerCode: string) {
+  const checkout = await getPlatformCheckoutRecordByCode(offerCode);
 
   return {
     item: checkout

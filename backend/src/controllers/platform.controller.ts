@@ -2,6 +2,7 @@ import {
   createPlatformProduct,
   deletePlatformProduct,
   getCheckoutPayload,
+  getCheckoutPayloadByCode,
   getDashboardPayload,
   getProductsPayload,
   getSalesPayload,
@@ -28,6 +29,10 @@ export const getPlatformCheckout = asyncHandler(async (request, response) => {
   const offerId = typeof request.query.offer === "string" ? request.query.offer : undefined;
 
   response.json(await getCheckoutPayload(productId, offerId));
+});
+
+export const getPlatformCheckoutByCode = asyncHandler(async (request, response) => {
+  response.json(await getCheckoutPayloadByCode(request.params.offerCode));
 });
 
 export const createPlatformProductItem = asyncHandler(async (request, response) => {

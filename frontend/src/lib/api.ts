@@ -210,6 +210,12 @@ export const authApi = {
     return apiRequest<PlatformCheckoutResponse>(`/platform/checkout/${productId}${search}`);
   },
 
+  getPlatformCheckoutByCode(offerCode: string) {
+    return apiRequest<PlatformCheckoutResponse>(
+      `/platform/checkout/code/${encodeURIComponent(offerCode)}`
+    );
+  },
+
   createPlatformProduct(values: ProductFormInput) {
     return apiRequest<PlatformProductMutationResponse>("/platform/products", {
       method: "POST",

@@ -19,6 +19,7 @@ export type PlatformProductRefundWindow = "7_days" | "14_days" | "21_days" | "30
 
 export interface PlatformProductOfferRecord {
   id: string;
+  code: string;
   title: string;
   description: string;
   checkoutDescription: string;
@@ -53,7 +54,10 @@ export interface PlatformProductCouponRecord {
   note: string;
 }
 
-export type PlatformProductOfferInput = Omit<PlatformProductOfferRecord, "id"> & { id?: string };
+export type PlatformProductOfferInput = Omit<PlatformProductOfferRecord, "id" | "code"> & {
+  id?: string;
+  code?: string;
+};
 export type PlatformProductCouponInput = Omit<PlatformProductCouponRecord, "id"> & { id?: string };
 
 export interface PlatformProductRecord {
@@ -131,6 +135,25 @@ function normalizeRefundWindow(value?: string): PlatformProductRefundWindow {
   return value === "14_days" || value === "21_days" || value === "30_days" ? value : "7_days";
 }
 
+function hashOfferCodeSeed(value: string) {
+  let hash = 2166136261;
+
+  for (const char of value) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(-7);
+}
+
+function sanitizeOfferCode(value?: string | null) {
+  return value?.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 16) ?? "";
+}
+
+function buildOfferCode(productId: string, offerId: string) {
+  return sanitizeOfferCode(hashOfferCodeSeed(`${productId}:${offerId}`));
+}
+
 function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
@@ -140,8 +163,11 @@ function normalizeOfferRecord(
   offer: Partial<PlatformProductOfferRecord>,
   index: number
 ): PlatformProductOfferRecord {
+  const normalizedId = offer.id?.trim() || `${productId}-offer-${index + 1}`;
+
   const normalized: PlatformProductOfferRecord = {
-    id: offer.id?.trim() || `${productId}-offer-${index + 1}`,
+    id: normalizedId,
+    code: sanitizeOfferCode(offer.code) || buildOfferCode(productId, normalizedId),
     title: offer.title?.trim() || `Oferta ${index + 1}`,
     description: offer.description?.trim() || "",
     checkoutDescription: offer.checkoutDescription?.trim() || "",
@@ -505,4 +531,53 @@ export async function getPlatformCheckoutRecord(productId: string, offerId?: str
     offer,
     coupons: parseCoupons(item.id, item.coupons).filter((coupon) => coupon.active)
   } satisfies PlatformCheckoutRecord;
+}
+
+export async function getPlatformCheckoutRecordByCode(offerCode: string) {
+  const normalizedCode = sanitizeOfferCode(offerCode);
+
+  if (!normalizedCode) {
+    throw new AppError("Checkout indisponivel.", 404);
+  }
+
+  const items = await prisma.platformProduct.findMany({
+    include: {
+      owner: {
+        select: {
+          name: true,
+          email: true,
+          avatarUrl: true
+        }
+      }
+    }
+  });
+
+  for (const item of items) {
+    const offer = parseOffers(item.id, item.offers).find(
+      (entry) => entry.code === normalizedCode && entry.active
+    );
+
+    if (!offer) {
+      continue;
+    }
+
+    return {
+      productId: item.id,
+      offerId: offer.id,
+      sellerName: item.owner.name,
+      sellerEmail: item.owner.email,
+      sellerAvatarUrl: item.owner.avatarUrl,
+      productName: item.name,
+      productDescription: item.description,
+      productImageUrl: item.imageUrl,
+      supportEmail: item.supportEmail || item.owner.email,
+      supportPhone: item.supportPhone,
+      invoiceStatementDescriptor: item.invoiceStatementDescriptor,
+      refundWindow: normalizeRefundWindow(item.refundWindow),
+      offer,
+      coupons: parseCoupons(item.id, item.coupons).filter((coupon) => coupon.active)
+    } satisfies PlatformCheckoutRecord;
+  }
+
+  throw new AppError("Checkout indisponivel.", 404);
 }

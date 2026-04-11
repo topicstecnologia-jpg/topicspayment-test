@@ -32,6 +32,7 @@ export type PlatformProductRefundWindow = "7_days" | "14_days" | "21_days" | "30
 
 export interface PlatformProductOffer {
   id: string;
+  code: string;
   title: string;
   description: string;
   checkoutDescription: string;
