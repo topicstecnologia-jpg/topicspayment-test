@@ -616,9 +616,15 @@ textarea {
 }
 
 .checkout-cta-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   border: 1px solid rgba(10, 124, 76, 0.72);
   border-radius: 999px;
   background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0.55px, transparent 0.75px) 0 0 / 6px 6px,
+    radial-gradient(circle at 50% 50%, rgba(180, 255, 219, 0.04) 0.55px, transparent 0.75px) 3px 3px / 6px 6px,
+    linear-gradient(90deg, transparent 0%, rgba(195, 255, 225, 0.06) 18%, transparent 34%, rgba(195, 255, 225, 0.04) 58%, transparent 76%, rgba(255, 255, 255, 0.04) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 16%, rgba(255, 255, 255, 0) 28%),
     linear-gradient(180deg, #1fb86d 0%, #15965a 30%, #0e7747 68%, #0b5e38 100%);
   box-shadow:
@@ -627,4 +633,40 @@ textarea {
     0 14px 28px rgba(8, 95, 55, 0.16),
     0 26px 56px rgba(8, 95, 55, 0.2);
   text-shadow: 0 1px 0 rgba(6, 60, 35, 0.32);
+}
+
+.checkout-cta-shine::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 16%, transparent 30%) 0 0 / 26% 100%,
+    linear-gradient(90deg, transparent 0%, rgba(170, 255, 212, 0.08) 12%, transparent 26%) 52% 0 / 28% 100%,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.1));
+  opacity: 0.82;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.checkout-cta-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 22%, transparent 44%),
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 18%, transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 20%);
+  background-size:
+    22% 100%,
+    30% 100%,
+    100% 100%;
+  background-position:
+    14% 0,
+    78% 0,
+    0 0;
+  background-repeat: no-repeat;
+  opacity: 0.42;
+  pointer-events: none;
 }
