@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  CheckCircle2,
   ChevronDown,
   CreditCard,
   Loader2,
@@ -720,10 +719,9 @@ export function PlatformCheckoutScreen({ productId, offerCode }: PlatformCheckou
                 <button
                   type="submit"
                   form={checkoutFormId}
-                  className="checkout-cta-shine mt-8 inline-flex h-16 w-full items-center justify-center gap-3 rounded-[20px] bg-[linear-gradient(135deg,#08a267_0%,#0fb57b_100%)] px-6 text-[1.08rem] font-extrabold tracking-[-0.04em] text-white shadow-[0_24px_60px_rgba(8,162,103,0.26)] transition hover:brightness-105"
+                  className="checkout-cta-shine mt-8 inline-flex h-[68px] w-full items-center justify-center rounded-[20px] border border-[#0f7a51] px-6 text-[1.02rem] font-extrabold uppercase tracking-[0.18em] text-white shadow-[0_24px_60px_rgba(7,113,72,0.24)] transition hover:brightness-[1.03]"
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                  {isSubmitting ? "Validando dados..." : "Comprar agora"}
+                  {isSubmitting ? "VALIDANDO DADOS..." : "COMPRAR AGORA"}
                 </button>
               </div>
             </div>
