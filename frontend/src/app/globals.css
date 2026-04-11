@@ -617,24 +617,24 @@ textarea {
 
 @keyframes checkout-button-shine {
   0% {
-    transform: translateX(-170%) skewX(-24deg);
+    transform: translateX(-172%) skewX(-24deg);
     opacity: 0;
   }
 
-  12% {
+  14% {
     opacity: 0;
   }
 
-  26% {
-    opacity: 0.96;
+  30% {
+    opacity: 0.68;
   }
 
-  52% {
-    opacity: 0.96;
+  48% {
+    opacity: 0.76;
   }
 
   100% {
-    transform: translateX(205%) skewX(-24deg);
+    transform: translateX(208%) skewX(-24deg);
     opacity: 0;
   }
 }
@@ -673,56 +673,56 @@ textarea {
 .checkout-cta-shine::after {
   content: "";
   position: absolute;
-  top: -10%;
-  bottom: -10%;
-  left: -32%;
-  width: 58%;
+  top: -8%;
+  bottom: -8%;
+  left: -26%;
+  width: 48%;
   border-radius: 999px;
   background:
     linear-gradient(
       to top,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.38) 22%,
-      rgba(255, 255, 255, 0.86) 62%,
-      rgba(255, 255, 255, 1) 84%,
-      rgba(255, 255, 255, 0.26) 100%
+      rgba(255, 255, 255, 0.02) 0%,
+      rgba(255, 255, 255, 0.12) 22%,
+      rgba(255, 255, 255, 0.48) 58%,
+      rgba(255, 255, 255, 0.78) 82%,
+      rgba(255, 255, 255, 0.14) 100%
     );
   mask-image:
     linear-gradient(
       to top,
-      rgba(0, 0, 0, 0.18) 0%,
-      rgba(0, 0, 0, 1) 26%,
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.82) 24%,
       rgba(0, 0, 0, 1) 100%
     ),
     linear-gradient(
     90deg,
     transparent 0%,
-    rgba(0, 0, 0, 0.95) 16%,
+    rgba(0, 0, 0, 0.72) 20%,
     rgba(0, 0, 0, 1) 50%,
-    rgba(0, 0, 0, 0.95) 84%,
+    rgba(0, 0, 0, 0.72) 80%,
     transparent 100%
   );
   -webkit-mask-image:
     linear-gradient(
       to top,
-      rgba(0, 0, 0, 0.18) 0%,
-      rgba(0, 0, 0, 1) 26%,
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.82) 24%,
       rgba(0, 0, 0, 1) 100%
     ),
     linear-gradient(
       90deg,
       transparent 0%,
-      rgba(0, 0, 0, 0.95) 16%,
+      rgba(0, 0, 0, 0.72) 20%,
       rgba(0, 0, 0, 1) 50%,
-      rgba(0, 0, 0, 0.95) 84%,
+      rgba(0, 0, 0, 0.72) 80%,
       transparent 100%
     );
   pointer-events: none;
   mix-blend-mode: screen;
-  filter: blur(4px);
+  filter: blur(5px);
   box-shadow:
-    0 0 16px rgba(255, 255, 255, 0.28),
-    0 0 30px rgba(255, 255, 255, 0.16);
-  transform: translateX(-170%) skewX(-24deg);
+    0 0 12px rgba(255, 255, 255, 0.18),
+    0 0 24px rgba(255, 255, 255, 0.12);
+  transform: translateX(-172%) skewX(-24deg);
   animation: checkout-button-shine 2.45s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
 }
